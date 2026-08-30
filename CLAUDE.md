@@ -34,8 +34,12 @@ Mask the `ILoggingEvent`, never the pattern layout. The OpenTelemetry Logback ap
 `event.getFormattedMessage()` directly, so layout-level masking would redact the console and
 still export raw PII over OTLP.
 
-The masking wrapper sits **inside** the async boundary:
-`Logger → AsyncAppender → MaskingWrapper → Console / OTLP`
+The masking wrapper sits **above** the async boundary, because Logback will not let anything
+replace an AsyncAppender's single child:
+`Logger → MaskingWrapper → AsyncAppender → Console / OTLP`
+
+Masking still runs on the async worker rather than the request thread, because the wrapped event
+masks lazily and does not mask in `prepareForDeferredProcessing()`.
 
 ## Two masking layers
 - **Type-aware** — reads cached `@Pii` metadata per class, renders a masked `toString()`.
