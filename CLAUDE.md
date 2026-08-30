@@ -12,8 +12,9 @@ Implementation plan: `docs/IMPLEMENTATION-PLAN.md`
 
 ## What it is NOT
 - Not a static scanner. It changes what reaches the appender at runtime; it does not read your code.
-- Not an application. There is no web layer, no datasource, no Docker image. Postgres appears in
-  test scope only, for the Hibernate bind-parameter test.
+- Not an application. The three published modules have no web layer and no datasource. The
+  `log-guard-demo` module is the exception and it never ships — it exists so the library can be
+  run and watched, and it is excluded from deploy.
 - Not a compliance guarantee. A bare name logged as a plain string is undetectable.
 
 ## Module layout
@@ -21,7 +22,8 @@ Implementation plan: `docs/IMPLEMENTATION-PLAN.md`
 log-guard/
 ├── log-guard-core/                  # annotations + masking engine, zero dependencies
 ├── log-guard-logback/               # appender wrapping, logback-classic provided
-└── log-guard-spring-boot-starter/   # auto-config, properties, startup validator
+├── log-guard-spring-boot-starter/   # auto-config, properties, startup validator
+└── log-guard-demo/                  # runnable Boot app + OTel collector, never deployed
 ```
 
 Core must stay Spring-free and dependency-free. That constraint is the point, not an accident —
@@ -54,16 +56,16 @@ Both are needed. Neither is sufficient.
 ## How to build
 ```
 ./mvnw test        # unit tests + Testcontainers integration tests (Docker required)
-./mvnw package     # builds all three module jars
+./mvnw package     # builds the module jars
+./mvnw -pl log-guard-demo spring-boot:run   # runs the demo app (starts Postgres + OTel collector)
 ```
 
 ## How Claude works in this repo
 
-The implementation is hand-written. Do not generate code in `src/main/java` — ask first.
-
-Useful for: explaining how a Logback or Spring internal behaves, reviewing code already written
-(`/code-review`, or the `spring-boot-reviewer` agent), and plumbing not being learned deliberately
-(poms, CI, docs, Central publishing).
+Claude writes the implementation, one phase at a time, following `docs/IMPLEMENTATION-PLAN.md`.
+Each phase ends at a manual checkpoint that the maintainer runs before the next phase starts.
+Decisions are stated in the plan before the code is written — if a decision is not in the plan,
+ask before coding it.
 
 ## Build order
 - **v0.1** — core engine, `@Pii`, Logback wrapper, auto-config, built-in patterns
