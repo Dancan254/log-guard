@@ -54,19 +54,31 @@ Layout-level masking (wrong)          Event-level masking (right)
 
 log.info("{}", customer)              log.info("{}", customer)
         |                                     |
-   ILoggingEvent                        AsyncAppender
-   (raw entity)                                |
-        |                                MaskingWrapper
+   ILoggingEvent                        MaskingWrapper     wraps the event,
+   (raw entity)                                |           masks nothing yet
+        |                                AsyncAppender     queues it
    +----+----+                                 |
-   |         |                            +----+----+
-Console    OTLP                           |         |
+   |         |                            +----+----+      masking runs here,
+Console    OTLP                           |         |      on the worker
 %mask      RAW PII                     Console    OTLP
                                        masked     masked
 ```
 
-The wrapper sits **inside** the async boundary, so masking runs on the async worker rather than
-the request thread. Unredacted events sit briefly in the in-memory queue; they are never written
-anywhere, but it is a real property and belongs in the README.
+The wrapper sits **above** the async boundary, but the masking does not run there.
+`MaskingLoggingEvent` masks lazily and deliberately does not mask in
+`prepareForDeferredProcessing()` — the one method `AsyncAppender` calls on the caller's thread. The
+reflection and the regex therefore execute on the async worker, when an encoder first reads the
+message.
+
+Putting the wrapper *inside* the async appender is not possible through Logback's public API:
+`AsyncAppenderBase.detachAppender()` detaches the child but never decrements the internal
+`appenderCount`, so the one permitted child slot stays consumed and the replacement is refused with
+a status warning. Wrapping above it reaches the same place by a different route.
+
+Two consequences, both real and both belonging in the README. Unredacted events sit briefly in the
+in-memory queue holding live references to your objects; they are never written anywhere. And
+because masking is deferred, an argument mutated between the log call and the queue flush renders
+in its later state.
 
 ---
 

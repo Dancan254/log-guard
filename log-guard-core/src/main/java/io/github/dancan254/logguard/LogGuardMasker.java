@@ -5,7 +5,7 @@ import io.github.dancan254.logguard.meta.PiiMetadataCache;
 import io.github.dancan254.logguard.pattern.PatternMasker;
 import io.github.dancan254.logguard.render.ObjectRenderer;
 
-public final class LogGuardMasker {
+public class LogGuardMasker {
 
     private final ObjectRenderer objectRenderer;
     private final PatternMasker patternMasker;
