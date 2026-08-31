@@ -13,7 +13,7 @@ class MdcMaskingTest {
 
     private final LogGuardMasker masker = new LogGuardMasker(new MaskingConfig(true, true,
             List.of(BuiltInPattern.EMAIL), List.of(), "pepper",
-            Set.of("customerName"), NestingConfig.DEFAULT, FailureMode.PLACEHOLDER));
+            Set.of("customerName"), NestingConfig.DEFAULT, FailureMode.PLACEHOLDER, MaskingConfig.DEFAULT_MAX_MESSAGE_LENGTH));
 
     @Test
     void should_redact_listed_key_whatever_its_value_holds() {

@@ -48,7 +48,7 @@ final class LogbackFixture {
     static LogGuardMasker masker(FailureMode onFailure) {
         return new LogGuardMasker(new MaskingConfig(true, true,
                 List.of(BuiltInPattern.EMAIL), List.of(), "pepper",
-                Set.of("customer-email"), NestingConfig.DEFAULT, onFailure));
+                Set.of("customer-email"), NestingConfig.DEFAULT, onFailure, MaskingConfig.DEFAULT_MAX_MESSAGE_LENGTH));
     }
 
     static ListAppender<ILoggingEvent> listAppender(LoggerContext context, String name) {

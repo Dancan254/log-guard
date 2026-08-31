@@ -28,7 +28,7 @@ class LogGuardMaskerTest {
     private static MaskingConfig config(boolean typeAware, boolean patterns) {
         return new MaskingConfig(typeAware, patterns,
                 List.of(BuiltInPattern.EMAIL), List.of(), "pepper",
-                Set.of(), NestingConfig.DEFAULT, FailureMode.PLACEHOLDER);
+                Set.of(), NestingConfig.DEFAULT, FailureMode.PLACEHOLDER, MaskingConfig.DEFAULT_MAX_MESSAGE_LENGTH);
     }
 
     @Test

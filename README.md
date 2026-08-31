@@ -34,8 +34,30 @@ redacted form too.
 
 ## Status
 
-Scaffold only — the masking engine is not implemented yet. See `CLAUDE.md` for the architecture
-and build order.
+Working through v0.2: masking engine, Logback event wrapping, Spring auto-configuration, all five
+event channels, nested objects, and the startup validator are in. See `CLAUDE.md` for the
+architecture and `docs/IMPLEMENTATION-PLAN.md` for what is left.
+
+## Performance
+
+JMH, `./mvnw -Pbench -pl log-guard-benchmarks verify`. Numbers below are from a loaded developer
+laptop (JDK 25, 12 cores, other containers running), so read them as an order of magnitude and as
+a comparison between rows, not as a spec sheet.
+
+| Benchmark | ns/op |
+|---|---|
+| Argument with no `@Pii` anywhere (the common case) | **8** |
+| A log line with nothing to mask, through the pattern layer | **126** |
+| Rendering an annotated 6-field entity | 1,519 |
+| Rendering a 20-field entity | 1,614 |
+| Rendering a list of three annotated entities | 4,745 |
+| A line that does contain an email, masked | 7,137 |
+| Both layers together on one event | 25,452 |
+
+The first row is the one that matters: an argument whose class carries no `@Pii` costs a
+`ClassValue` lookup and nothing else. The pattern layer only reaches the regex when a message
+actually satisfies some enabled pattern's minimum requirements — before that check existed, any
+line containing a single digit paid 14 µs.
 
 ## Modules
 
@@ -43,7 +65,8 @@ and build order.
 |---|---|
 | `log-guard-core` | `@Pii`, strategies, masking engine. Zero dependencies. |
 | `log-guard-logback` | Logback appender wrapping. |
-| `log-guard-spring-boot-starter` | Auto-configuration and properties. |
+| `log-guard-spring-boot-starter` | Auto-configuration, properties, startup validator. |
+| `log-guard-benchmarks` | JMH harness. Never published, `-Pbench` only. |
 
 ## Licence
 

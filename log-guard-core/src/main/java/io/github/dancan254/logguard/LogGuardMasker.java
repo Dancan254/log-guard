@@ -25,7 +25,8 @@ public class LogGuardMasker {
                 ? new ObjectRenderer(valueMasker, config.nesting())
                 : null;
         this.patternMasker = config.patternsEnabled()
-                ? new PatternMasker(config.builtInPatterns(), config.customPatterns(), valueMasker)
+                ? new PatternMasker(config.builtInPatterns(), config.customPatterns(), valueMasker,
+                        config.maxMessageLength())
                 : null;
         this.mdcRedactKeys = config.mdcRedactKeys();
         this.onFailure = config.onFailure();

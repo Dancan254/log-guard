@@ -62,7 +62,9 @@ public record LogGuardProperties(
 
             @DefaultValue({"EMAIL", "IBAN", "CREDIT_CARD", "PHONE_E164"}) List<BuiltInPattern> builtIn,
 
-            List<CustomPattern> custom) {
+            List<CustomPattern> custom,
+
+            @DefaultValue("8192") int maxMessageLength) {
 
         public Patterns {
             custom = custom == null ? List.of() : List.copyOf(custom);

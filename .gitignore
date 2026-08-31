@@ -13,3 +13,6 @@ target/
 .classpath
 
 *.log
+
+# maven-shade writes this next to the module pom
+dependency-reduced-pom.xml
