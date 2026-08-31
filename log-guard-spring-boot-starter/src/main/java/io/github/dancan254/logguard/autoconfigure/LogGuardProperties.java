@@ -39,6 +39,6 @@ public record LogGuardProperties(
     public record CustomPattern(String name, String regex, @DefaultValue("REDACT") MaskStrategy strategy) {
     }
 
-    public record Validation(@DefaultValue("WARN") ValidationMode unannotatedEntity) {
+    public record Validation(@DefaultValue("WARN") ValidationMode unannotatedEntity)  {
     }
 }

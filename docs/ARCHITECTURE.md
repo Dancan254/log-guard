@@ -1,8 +1,5 @@
 # log-guard architecture
 
-Design record for v0.1. Published version:
-https://claude.ai/code/artifact/b26775b2-230b-4d55-9d63-4b8f4422440c
-
 ---
 
 ## The problem
