@@ -31,14 +31,32 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -52,12 +70,6 @@
             <version>${opentelemetry-api-incubator.version}</version>
         </dependency>
 
-        <!-- Boot's OTel starter exports; it does not bridge Logback into the SDK. This does. -->
-        <dependency>
-            <groupId>io.opentelemetry.instrumentation</groupId>
-            <artifactId>opentelemetry-logback-appender-1.0</artifactId>
-            <version>${opentelemetry-logback-appender.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -88,6 +100,49 @@
             <optional>true</optional>
         </dependency>
     </dependencies>
+
+    <!-- The equivalence check: same app, same curls, Log4j2 instead of Logback. -->
+    <profiles>
+        <!-- activeByDefault switches itself off the moment -Plog4j2 is named, which is the point. -->
+        <profile>
+            <id>logback</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>io.github.dancan254</groupId>
+                    <artifactId>log-guard-logback</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+                <!-- Boot's OTel starter exports; it does not bridge Logback into the SDK. This does. -->
+                <dependency>
+                    <groupId>io.opentelemetry.instrumentation</groupId>
+                    <artifactId>opentelemetry-logback-appender-1.0</artifactId>
+                    <version>${opentelemetry-logback-appender.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>log4j2</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-log4j2</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>io.github.dancan254</groupId>
+                    <artifactId>log-guard-log4j2</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>

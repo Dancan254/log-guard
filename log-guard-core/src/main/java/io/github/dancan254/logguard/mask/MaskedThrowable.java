@@ -1,14 +1,14 @@
-package io.github.dancan254.logguard.logback;
+package io.github.dancan254.logguard.mask;
 
 /**
  * A stand-in for a logged exception, carrying its masked message and its stack trace. The original
  * type is kept for {@link #toString()} so a printed trace still names the class that was thrown.
  */
-final class MaskedThrowable extends Throwable {
+public final class MaskedThrowable extends Throwable {
 
     private final String type;
 
-    MaskedThrowable(String type, String message, StackTraceElement[] stackTrace, Throwable cause) {
+    public MaskedThrowable(String type, String message, StackTraceElement[] stackTrace, Throwable cause) {
         super(message, cause, true, true);
         this.type = type;
         setStackTrace(stackTrace);

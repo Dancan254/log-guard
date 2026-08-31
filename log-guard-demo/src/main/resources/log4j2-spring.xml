@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Appenders>
+        <Console name="CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %logger{28} mdc=%X - %msg%n%throwable"/>
+        </Console>
+
+        <!-- Every appender sits behind the rewrite, so none of them ever sees the raw event. -->
+        <Rewrite name="MASKED">
+            <LogGuardRewritePolicy/>
+            <AppenderRef ref="CONSOLE"/>
+        </Rewrite>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="org.hibernate.orm.jdbc.bind" level="TRACE"/>
+        <Root level="INFO">
+            <AppenderRef ref="MASKED"/>
+        </Root>
+    </Loggers>
+</Configuration>

@@ -15,9 +15,23 @@
     <description>Auto-configuration, configuration properties and the startup validator.</description>
 
     <dependencies>
+        <!-- The annotations and the engine: every consumer needs these. -->
+        <dependency>
+            <groupId>io.github.dancan254</groupId>
+            <artifactId>log-guard-core</artifactId>
+        </dependency>
+
+        <!-- Both adapters are optional: an app runs one logging backend, and a starter that
+             dragged Logback onto a Log4j2 application would put two on its classpath. -->
         <dependency>
             <groupId>io.github.dancan254</groupId>
             <artifactId>log-guard-logback</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>io.github.dancan254</groupId>
+            <artifactId>log-guard-log4j2</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
@@ -27,6 +41,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

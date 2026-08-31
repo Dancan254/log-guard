@@ -4,6 +4,7 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import io.github.dancan254.logguard.LogGuardMasker;
+import io.github.dancan254.logguard.mask.MaskedThrowable;
 
 import java.util.HashSet;
 import java.util.IdentityHashMap;
