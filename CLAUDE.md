@@ -52,6 +52,21 @@ Both are needed. Neither is sufficient.
 ## Five channels masked per event
 `getArgumentArray()` · `getFormattedMessage()` · `getMDCPropertyMap()` · `getKeyValuePairs()` · `IThrowableProxy`
 
+The throwable proxy extends Logback's `ThrowableProxy` because the OpenTelemetry Logback appender
+exports an exception only when it can pull a `Throwable` out of one. It hands over a masked
+stand-in; an exception whose chain held nothing to mask is passed through untouched, so
+`exception.type` stays exact except where masking actually changed something.
+
+The same appender only inspects a logger's **top-level** appenders, so it never finds one log-guard
+has wrapped. Hand it the SDK through `MaskingAppenderWrapper.getDelegate()` —
+`log-guard-demo`'s `DemoApplication` shows the four lines.
+
+## Nesting
+Nested objects, arrays, collections and maps are rendered recursively: depth 3, 10 elements, an
+identity cycle guard, and reflection only into classes that carry `@Pii` (narrow it further with
+`log-guard.nesting.base-packages`). A class with no annotation of its own is still rendered when one
+of its **declared field types** carries `@Pii` — a field typed `Object` hides whatever it holds.
+
 ## Versions
 - Spring Boot 4.1.1, Java 25
 - Testcontainers version comes from the Boot BOM — never pin it by hand
@@ -73,5 +88,5 @@ ask before coding it.
 
 ## Build order
 - **v0.1** — core engine, `@Pii`, Logback wrapper, auto-config, built-in patterns
-- **v0.2** — MDC, key-value pairs, throwable masking, startup validator
+- **v0.2** — MDC, key-value pairs, throwable masking, nesting, startup validator
 - **v0.3** — Log4j2 `RewritePolicy`, JMH benchmarks, Jackson module, Maven Central publishing

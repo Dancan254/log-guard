@@ -25,6 +25,12 @@ log-guard:
   hash-salt: ${LOG_GUARD_SALT:log-guard-demo-salt}
   patterns:
     built-in: [EMAIL, PHONE_E164, KENYAN_NATIONAL_ID]
+  mdc:
+    redact-keys: [customerName]
+  nesting:
+    max-depth: 3
+    max-elements: 10
+  on-failure: PLACEHOLDER
 
 management:
   tracing:

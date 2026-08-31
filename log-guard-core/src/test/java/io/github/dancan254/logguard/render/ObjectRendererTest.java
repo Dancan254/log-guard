@@ -2,6 +2,7 @@ package io.github.dancan254.logguard.render;
 
 import io.github.dancan254.logguard.MaskStrategy;
 import io.github.dancan254.logguard.Pii;
+import io.github.dancan254.logguard.NestingConfig;
 import io.github.dancan254.logguard.mask.ValueMasker;
 import org.junit.jupiter.api.Test;
 
@@ -38,7 +39,7 @@ class ObjectRendererTest {
         String email = "jane.wanjiru@acme.io";
     }
 
-    private final ObjectRenderer renderer = new ObjectRenderer(new ValueMasker("pepper"));
+    private final ObjectRenderer renderer = new ObjectRenderer(new ValueMasker("pepper"), NestingConfig.DEFAULT);
 
     @Test
     void should_mask_annotated_field_when_rendering() {

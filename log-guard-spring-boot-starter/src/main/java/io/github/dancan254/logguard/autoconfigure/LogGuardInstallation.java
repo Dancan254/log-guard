@@ -12,6 +12,8 @@ import io.github.dancan254.logguard.logback.MaskingInstaller;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 
+import java.util.Set;
+
 final class LogGuardInstallation {
 
     private LogGuardInstallation() {
@@ -40,7 +42,10 @@ final class LogGuardInstallation {
                 .toList();
         requireHashSalt(properties, custom);
         return new MaskingConfig(properties.typeAware().enabled(), patterns.enabled(),
-                patterns.builtIn(), custom, properties.hashSalt());
+                patterns.builtIn(), custom, properties.hashSalt(),
+                Set.copyOf(properties.mdc().redactKeys()),
+                properties.nesting().toNestingConfig(),
+                properties.onFailure());
     }
 
     /**
