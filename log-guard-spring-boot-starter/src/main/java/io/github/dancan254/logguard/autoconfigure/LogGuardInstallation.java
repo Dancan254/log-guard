@@ -17,12 +17,16 @@ final class LogGuardInstallation {
 
     private static final String LOGBACK_CONTEXT = "ch.qos.logback.classic.LoggerContext";
 
+    private static final String LOGBACK_ADAPTER = "io.github.dancan254.logguard.logback.MaskingInstaller";
+
     private static final String LOG4J2_POLICY =
             "io.github.dancan254.logguard.log4j2.LogGuardMaskerHolder";
 
     static LogGuardMasker apply(LogGuardProperties properties) {
         LogGuardMasker masker = new LogGuardMasker(toMaskingConfig(properties));
-        if (ClassUtils.isPresent(LOGBACK_CONTEXT, CLASS_LOADER)) {
+        // Both halves have to be there: Logback itself, and the adapter someone may have excluded.
+        if (ClassUtils.isPresent(LOGBACK_CONTEXT, CLASS_LOADER)
+                && ClassUtils.isPresent(LOGBACK_ADAPTER, CLASS_LOADER)) {
             LogbackInstallation.install(masker);
         }
         publishToLog4j2(masker);

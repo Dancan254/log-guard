@@ -21,12 +21,12 @@
             <artifactId>log-guard-core</artifactId>
         </dependency>
 
-        <!-- Both adapters are optional: an app runs one logging backend, and a starter that
-             dragged Logback onto a Log4j2 application would put two on its classpath. -->
+        <!-- The Logback adapter ships by default because Boot's default backend is Logback and
+             masking has to work from the dependency alone. It carries no backend of its own, and
+             on a Log4j2 application none of its classes ever load. -->
         <dependency>
             <groupId>io.github.dancan254</groupId>
             <artifactId>log-guard-logback</artifactId>
-            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>io.github.dancan254</groupId>

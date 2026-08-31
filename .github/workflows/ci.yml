@@ -35,3 +35,20 @@ jobs:
         with:
           name: log-guard-jars
           path: '*/target/*.jar'
+
+  clean-app:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+      - name: Install log-guard
+        run: ./mvnw --batch-mode -DskipTests install
+      # A Boot app whose only log-guard configuration is the dependency. If the starter ever stops
+      # auto-configuring itself, this fails where no unit test would.
+      - name: Consume the starter from a clean app
+        run: ./smoke/verify.sh
