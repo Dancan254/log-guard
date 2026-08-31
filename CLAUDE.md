@@ -67,6 +67,16 @@ identity cycle guard, and reflection only into classes that carry `@Pii` (narrow
 `log-guard.nesting.base-packages`). A class with no annotation of its own is still rendered when one
 of its **declared field types** carries `@Pii` — a field typed `Object` hides whatever it holds.
 
+## Startup validator
+Scans `@Entity` classes in the app's own packages (Spring's metadata reader, matched on the
+annotation *name*, so the starter needs no JPA dependency) and reports a class that declares a
+`toString` and holds a field whose name is in the PII taxonomy carrying no `@Pii`.
+`warn` by default, `fail` for CI, `off` to skip. The same scan throws `MissingHashSaltException`
+when any `@Pii(strategy = HASH)` is found with a blank salt.
+
+Lombok's `@ToString.Exclude` is source-retained and invisible at runtime, so it cannot silence a
+finding — `@Pii(strategy = DROP)` is the opt-out.
+
 ## Versions
 - Spring Boot 4.1.1, Java 25
 - Testcontainers version comes from the Boot BOM — never pin it by hand
