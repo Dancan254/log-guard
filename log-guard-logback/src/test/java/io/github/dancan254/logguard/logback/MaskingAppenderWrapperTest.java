@@ -6,10 +6,13 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import io.github.dancan254.logguard.BuiltInPattern;
 import io.github.dancan254.logguard.LogGuardMasker;
+import io.github.dancan254.logguard.NestingConfig;
+import io.github.dancan254.logguard.FailureMode;
 import io.github.dancan254.logguard.MaskingConfig;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static io.github.dancan254.logguard.logback.LogbackFixture.Customer;
 import static io.github.dancan254.logguard.logback.LogbackFixture.capture;
@@ -19,13 +22,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MaskingAppenderWrapperTest {
 
-    private static final LogGuardMasker THROWING = new LogGuardMasker(
-            new MaskingConfig(true, true, List.of(BuiltInPattern.EMAIL), List.of(), "pepper")) {
-        @Override
-        public Object maskArgument(Object argument) {
-            throw new IllegalStateException("masking blew up");
-        }
-    };
+    private static final LogGuardMasker THROWING = throwingMasker(FailureMode.PLACEHOLDER);
+
+    private static LogGuardMasker throwingMasker(FailureMode onFailure) {
+        return new LogGuardMasker(
+                new MaskingConfig(true, true, List.of(BuiltInPattern.EMAIL), List.of(), "pepper",
+                        Set.of(), NestingConfig.DEFAULT, onFailure)) {
+            @Override
+            public Object maskArgument(Object argument) {
+                throw new IllegalStateException("masking blew up");
+            }
+        };
+    }
 
     private final LoggerContext context = LogbackFixture.loggerContext();
 
@@ -89,5 +97,45 @@ class MaskingAppenderWrapperTest {
             assertThat(event.getLevel()).isEqualTo(Level.INFO);
             assertThat(event.getLoggerName()).isEqualTo("capture");
         });
+    }
+
+    @Test
+    void should_discard_the_event_when_masking_fails_and_the_mode_is_drop() {
+        ListAppender<ILoggingEvent> delegate = listAppender(context, "console");
+        MaskingAppenderWrapper wrapper =
+                new MaskingAppenderWrapper(delegate, throwingMasker(FailureMode.DROP));
+        wrapper.start();
+
+        wrapper.doAppend(capture("Processing customer {}", new Customer()));
+
+        assertThat(delegate.list).isEmpty();
+    }
+
+    @Test
+    void should_emit_the_raw_payload_when_masking_fails_and_the_mode_is_passthrough() {
+        ListAppender<ILoggingEvent> delegate = listAppender(context, "console");
+        MaskingAppenderWrapper wrapper =
+                new MaskingAppenderWrapper(delegate, throwingMasker(FailureMode.PASSTHROUGH));
+        wrapper.start();
+
+        wrapper.doAppend(capture("Processing customer {}", new Customer()));
+
+        assertThat(delegate.list).singleElement()
+                .extracting(ILoggingEvent::getFormattedMessage)
+                .asString()
+                .contains("jane.wanjiru@acme.io");
+    }
+
+    @Test
+    void should_keep_appending_when_masking_fails_and_the_mode_is_placeholder() {
+        ListAppender<ILoggingEvent> delegate = listAppender(context, "console");
+        MaskingAppenderWrapper wrapper = new MaskingAppenderWrapper(delegate, THROWING);
+        wrapper.start();
+
+        wrapper.doAppend(capture("Processing customer {}", new Customer()));
+
+        assertThat(delegate.list).singleElement()
+                .extracting(ILoggingEvent::getFormattedMessage)
+                .isEqualTo(MaskingLoggingEvent.MASKING_FAILED_MESSAGE);
     }
 }

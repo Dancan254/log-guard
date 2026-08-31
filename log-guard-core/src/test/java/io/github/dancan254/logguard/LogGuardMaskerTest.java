@@ -3,6 +3,7 @@ package io.github.dancan254.logguard;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,7 +27,8 @@ class LogGuardMaskerTest {
 
     private static MaskingConfig config(boolean typeAware, boolean patterns) {
         return new MaskingConfig(typeAware, patterns,
-                List.of(BuiltInPattern.EMAIL), List.of(), "pepper");
+                List.of(BuiltInPattern.EMAIL), List.of(), "pepper",
+                Set.of(), NestingConfig.DEFAULT, FailureMode.PLACEHOLDER);
     }
 
     @Test

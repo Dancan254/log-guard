@@ -3,6 +3,7 @@ package io.github.dancan254.logguard.logback;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
+import io.github.dancan254.logguard.FailureMode;
 import io.github.dancan254.logguard.LogGuardMasker;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,7 +29,13 @@ public final class MaskingAppenderWrapper extends UnsynchronizedAppenderBase<ILo
 
     @Override
     protected void append(ILoggingEvent event) {
-        delegate.doAppend(new MaskingLoggingEvent(event, masker, this::reportFailure));
+        MaskingLoggingEvent masked = new MaskingLoggingEvent(event, masker, this::reportFailure);
+        // Dropping is the one mode that has to know the outcome before appending, so it pays for
+        // masking the message here instead of on the encoder's first read.
+        if (masker.onFailure() == FailureMode.DROP && masked.isMaskingFailed()) {
+            return;
+        }
+        delegate.doAppend(masked);
     }
 
     @Override
