@@ -1,5 +1,10 @@
 # log-guard — implementation plan (v0.1 → v0.3)
 
+> **All eight phases are delivered and merged** (PRs #1–#7, 2026-08-30 → 2026-09-01). The plan is
+> kept as the record of what was decided before the code was written. Where the build disagreed
+> with the plan, the plan has been corrected in place and the disagreement is listed under
+> [What the build changed](#what-the-build-changed).
+
 Claude writes the implementation. You review each phase and run the manual checkpoint at the end
 of it. Nothing moves to the next phase until you say the checkpoint passed.
 
@@ -394,8 +399,11 @@ containing it.
 Scans `@Entity` classes in the app's base package using Spring's existing classpath scanner (no new
 dependency). Reports a class that has a generated `toString()` and a field whose **name** matches
 the PII taxonomy — `email`, `phone`, `msisdn`, `ssn`, `nationalId`, `dob`, `dateOfBirth`, `iban`,
-`pan`, `cardNumber`, `password`, `token`, `secret` — carrying neither `@Pii` nor
-`@ToString.Exclude`.
+`pan`, `cardNumber`, `password`, `token`, `secret` — carrying no `@Pii`.
+
+`@ToString.Exclude` cannot be part of that test, though the plan originally said it would be:
+Lombok's annotations are `SOURCE`-retained and exist in neither the class file nor the runtime
+model, so nothing can see them. `@Pii(strategy = DROP)` is the opt-out instead.
 
 `warn` is the default: failing someone's app on a dependency upgrade is hostile. `fail` is
 documented for `application-test.yml` so CI catches new entities. `off` skips the scan entirely.
@@ -479,6 +487,22 @@ artifact from a clean app to prove the starter auto-configures with no other con
 
 then add `io.github.dancan254:log-guard-spring-boot-starter:0.1.0` to a brand-new Boot app,
 `log.info("{}", someEntity)`, and confirm it masks with no configuration beyond the dependency.
+
+---
+
+## What the build changed
+
+Six places where reality disagreed with a decision written above. Each was found by running the
+thing, not by reading it.
+
+| Phase | The plan said | What is true |
+|---|---|---|
+| 2 | Wrap inside the async appender | `AsyncAppenderBase.detachAppender()` never decrements `appenderCount`, so nothing can replace its single child. The wrapper sits **above** the boundary and masks lazily, which keeps the work on the async worker anyway. |
+| 3 | The OTel appender would just work | `OpenTelemetryAppender.install()` inspects only top-level appenders and never finds a wrapped one, so it exports nothing. The application hands it the SDK through `MaskingAppenderWrapper.getDelegate()`. |
+| 4 | A wrapping `IThrowableProxy` is enough | The OTel appender exports an exception only through a real `ThrowableProxy` it can read a `Throwable` off. The masking proxy extends one and hands over a masked stand-in; an unchanged chain is passed through so `exception.type` stays exact. |
+| 5 | `@ToString.Exclude` silences a finding | It is `SOURCE`-retained and invisible at runtime. `@Pii(strategy = DROP)` is the opt-out. |
+| 6 | Benchmarks would document the engine | They condemned it: a line with nothing to mask cost **14 µs**, because the prefilter only asked "is there a digit?" and the email branch was quadratic in line length. Both fixed; that line now costs 126 ns. |
+| 7–8 | Making both adapters optional is tidy | It broke a clean application: Logback present, adapter absent, startup dead. The Logback adapter ships by default; `logback-classic` stays optional. Caught by the clean-app job, which no unit test would have. |
 
 ---
 
