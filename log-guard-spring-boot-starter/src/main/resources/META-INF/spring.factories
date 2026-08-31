@@ -1,0 +1,2 @@
+org.springframework.context.ApplicationListener=\
+  io.github.dancan254.logguard.autoconfigure.LogGuardLoggingListener

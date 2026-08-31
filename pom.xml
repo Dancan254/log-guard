@@ -38,6 +38,7 @@
         <module>log-guard-core</module>
         <module>log-guard-logback</module>
         <module>log-guard-spring-boot-starter</module>
+        <module>log-guard-demo</module>
     </modules>
 
     <properties>

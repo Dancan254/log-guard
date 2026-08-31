@@ -1,0 +1,41 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: log-guard-demo
+  threads:
+    virtual:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  docker:
+    compose:
+      file: compose.yaml
+      lifecycle-management: start_and_stop
+
+logging:
+  level:
+    org.hibernate.orm.jdbc.bind: TRACE
+
+log-guard:
+  enabled: true
+  hash-salt: ${LOG_GUARD_SALT:log-guard-demo-salt}
+  patterns:
+    built-in: [EMAIL, PHONE_E164, KENYAN_NATIONAL_ID]
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  opentelemetry:
+    logging:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/logs
+    tracing:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/traces
