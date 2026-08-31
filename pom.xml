@@ -37,6 +37,8 @@
     <modules>
         <module>log-guard-core</module>
         <module>log-guard-logback</module>
+        <module>log-guard-log4j2</module>
+        <module>log-guard-jackson</module>
         <module>log-guard-spring-boot-starter</module>
         <module>log-guard-demo</module>
     </modules>
@@ -75,6 +77,16 @@
             <dependency>
                 <groupId>io.github.dancan254</groupId>
                 <artifactId>log-guard-logback</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.dancan254</groupId>
+                <artifactId>log-guard-log4j2</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.dancan254</groupId>
+                <artifactId>log-guard-jackson</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

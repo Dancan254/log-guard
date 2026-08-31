@@ -1,16 +1,10 @@
 package io.github.dancan254.logguard.autoconfigure;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.LoggerContextListener;
 import io.github.dancan254.logguard.LogGuardMasker;
 import io.github.dancan254.logguard.MaskStrategy;
 import io.github.dancan254.logguard.MaskingConfig;
 import io.github.dancan254.logguard.exception.MissingHashSaltException;
-import io.github.dancan254.logguard.logback.MaskingInstaller;
-import org.slf4j.ILoggerFactory;
-import org.slf4j.LoggerFactory;
+import org.springframework.util.ClassUtils;
 
 import java.util.Set;
 
@@ -19,19 +13,35 @@ final class LogGuardInstallation {
     private LogGuardInstallation() {
     }
 
+    private static final ClassLoader CLASS_LOADER = LogGuardInstallation.class.getClassLoader();
+
+    private static final String LOGBACK_CONTEXT = "ch.qos.logback.classic.LoggerContext";
+
+    private static final String LOG4J2_POLICY =
+            "io.github.dancan254.logguard.log4j2.LogGuardMaskerHolder";
+
     static LogGuardMasker apply(LogGuardProperties properties) {
         LogGuardMasker masker = new LogGuardMasker(toMaskingConfig(properties));
-        if (LoggerFactory.getILoggerFactory() instanceof LoggerContext context) {
-            install(context, masker);
+        if (ClassUtils.isPresent(LOGBACK_CONTEXT, CLASS_LOADER)) {
+            LogbackInstallation.install(masker);
         }
+        publishToLog4j2(masker);
         return masker;
     }
 
-    private static void install(LoggerContext context, LogGuardMasker masker) {
-        MaskingInstaller installer = new MaskingInstaller(masker);
-        installer.install(context);
-        if (context.getCopyOfListenerList().stream().noneMatch(ReinstallOnReset.class::isInstance)) {
-            context.addListener(new ReinstallOnReset(installer));
+    /**
+     * Log4j2 builds its own plugins from configuration, so the adapter cannot be handed the masker
+     * — it is published where the rewrite policy will look for it. Wiring the policy itself stays
+     * the application's job, in log4j2.xml, because that is where its appender graph is described.
+     */
+    private static void publishToLog4j2(LogGuardMasker masker) {
+        try {
+            Class<?> holder = Class.forName(LOG4J2_POLICY, true, CLASS_LOADER);
+            holder.getMethod("set", LogGuardMasker.class).invoke(null, masker);
+        } catch (ClassNotFoundException | LinkageError absent) {
+            // The app is on Logback. Nothing to publish.
+        } catch (ReflectiveOperationException cause) {
+            throw new IllegalStateException("log-guard could not publish its masker to Log4j2", cause);
         }
     }
 
@@ -60,29 +70,4 @@ final class LogGuardInstallation {
         }
     }
 
-    /** Boot resets the logger context more than once; every reset drops the wrappers. */
-    private record ReinstallOnReset(MaskingInstaller installer) implements LoggerContextListener {
-
-        @Override
-        public boolean isResetResistant() {
-            return true;
-        }
-
-        @Override
-        public void onReset(LoggerContext context) {
-            installer.install(context);
-        }
-
-        @Override
-        public void onStart(LoggerContext context) {
-        }
-
-        @Override
-        public void onStop(LoggerContext context) {
-        }
-
-        @Override
-        public void onLevelChange(Logger logger, Level level) {
-        }
-    }
 }
