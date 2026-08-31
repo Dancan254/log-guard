@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,7 +30,8 @@ class MaskingShowcaseTest {
     @Test
     void should_mask_every_annotated_field_when_rendering_the_readme_example() {
         LogGuardMasker masker = new LogGuardMasker(new MaskingConfig(true, true,
-                List.of(BuiltInPattern.EMAIL, BuiltInPattern.PHONE_E164), List.of(), "log-guard-demo-salt"));
+                List.of(BuiltInPattern.EMAIL, BuiltInPattern.PHONE_E164), List.of(), "log-guard-demo-salt",
+                Set.of(), NestingConfig.DEFAULT, FailureMode.PLACEHOLDER));
 
         Customer customer = new Customer();
         String before = "Processing customer " + customer;
