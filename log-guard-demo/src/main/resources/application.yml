@@ -25,6 +25,7 @@ log-guard:
   hash-salt: ${LOG_GUARD_SALT:log-guard-demo-salt}
   patterns:
     built-in: [EMAIL, PHONE_E164, KENYAN_NATIONAL_ID]
+    max-message-length: 8192
   mdc:
     redact-keys: [customerName]
   nesting:

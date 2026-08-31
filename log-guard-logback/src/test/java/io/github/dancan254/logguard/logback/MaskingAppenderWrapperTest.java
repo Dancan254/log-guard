@@ -27,7 +27,7 @@ class MaskingAppenderWrapperTest {
     private static LogGuardMasker throwingMasker(FailureMode onFailure) {
         return new LogGuardMasker(
                 new MaskingConfig(true, true, List.of(BuiltInPattern.EMAIL), List.of(), "pepper",
-                        Set.of(), NestingConfig.DEFAULT, onFailure)) {
+                        Set.of(), NestingConfig.DEFAULT, onFailure, MaskingConfig.DEFAULT_MAX_MESSAGE_LENGTH)) {
             @Override
             public Object maskArgument(Object argument) {
                 throw new IllegalStateException("masking blew up");

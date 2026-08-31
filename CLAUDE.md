@@ -77,6 +77,15 @@ when any `@Pii(strategy = HASH)` is found with a blank salt.
 Lombok's `@ToString.Exclude` is source-retained and invisible at runtime, so it cannot silence a
 finding — `@Pii(strategy = DROP)` is the opt-out.
 
+## Regex safety
+`log-guard.patterns.max-message-length` (default 8192) caps what the pattern layer scans. Past the
+cap the head is masked and the tail is replaced with `…[log-guard: message truncated]` — it fails
+closed, because skipping the regex on long input is a leak anyone can trigger by padding a field.
+The prefilter is a flat ASCII table, so a line with no trigger character never reaches the regex.
+
+Benchmarks live in `log-guard-benchmarks` (JMH), outside the normal build:
+`./mvnw -Pbench -pl log-guard-benchmarks verify`.
+
 ## Versions
 - Spring Boot 4.1.1, Java 25
 - Testcontainers version comes from the Boot BOM — never pin it by hand

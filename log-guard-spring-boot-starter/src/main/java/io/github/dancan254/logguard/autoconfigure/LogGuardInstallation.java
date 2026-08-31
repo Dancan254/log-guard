@@ -45,7 +45,8 @@ final class LogGuardInstallation {
                 patterns.builtIn(), custom, properties.hashSalt(),
                 Set.copyOf(properties.mdc().redactKeys()),
                 properties.nesting().toNestingConfig(),
-                properties.onFailure());
+                properties.onFailure(),
+                patterns.maxMessageLength());
     }
 
     /**

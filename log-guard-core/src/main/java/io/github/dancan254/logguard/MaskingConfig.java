@@ -13,7 +13,11 @@ public record MaskingConfig(
         String hashSalt,
         Set<String> mdcRedactKeys,
         NestingConfig nesting,
-        FailureMode onFailure) {
+        FailureMode onFailure,
+        int maxMessageLength) {
+
+    /** Long enough for any real log line; short enough that a padded field cannot cost much. */
+    public static final int DEFAULT_MAX_MESSAGE_LENGTH = 8192;
 
     public MaskingConfig {
         builtInPatterns = builtInPatterns == null ? List.of() : List.copyOf(builtInPatterns);
@@ -23,6 +27,7 @@ public record MaskingConfig(
                 .collect(Collectors.toUnmodifiableSet());
         nesting = nesting == null ? NestingConfig.DEFAULT : nesting;
         onFailure = onFailure == null ? FailureMode.PLACEHOLDER : onFailure;
+        maxMessageLength = maxMessageLength <= 0 ? DEFAULT_MAX_MESSAGE_LENGTH : maxMessageLength;
     }
 
     public record CustomPattern(String name, String regex, MaskStrategy strategy) {

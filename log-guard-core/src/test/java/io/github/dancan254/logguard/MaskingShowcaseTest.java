@@ -31,7 +31,7 @@ class MaskingShowcaseTest {
     void should_mask_every_annotated_field_when_rendering_the_readme_example() {
         LogGuardMasker masker = new LogGuardMasker(new MaskingConfig(true, true,
                 List.of(BuiltInPattern.EMAIL, BuiltInPattern.PHONE_E164), List.of(), "log-guard-demo-salt",
-                Set.of(), NestingConfig.DEFAULT, FailureMode.PLACEHOLDER));
+                Set.of(), NestingConfig.DEFAULT, FailureMode.PLACEHOLDER, MaskingConfig.DEFAULT_MAX_MESSAGE_LENGTH));
 
         Customer customer = new Customer();
         String before = "Processing customer " + customer;

@@ -41,6 +41,16 @@
         <module>log-guard-demo</module>
     </modules>
 
+    <!-- Benchmarks are not part of a normal build: they need a quiet machine and minutes, not seconds. -->
+    <profiles>
+        <profile>
+            <id>bench</id>
+            <modules>
+                <module>log-guard-benchmarks</module>
+            </modules>
+        </profile>
+    </profiles>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>25</maven.compiler.release>
