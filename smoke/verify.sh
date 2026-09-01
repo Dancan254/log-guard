@@ -7,7 +7,13 @@ here="$(cd "$(dirname "$0")" && pwd)"
 output="$(mktemp)"
 trap 'rm -f "$output"' EXIT
 
-(cd "$here/clean-app" && mvn --batch-mode -q clean package)
+# Read the version off the reactor rather than pinning it in the app's pom, so a release bump does
+# not leave this checking a stale artifact — or a missing one.
+version="$("$here/../mvnw" --batch-mode -q -N help:evaluate \
+    -Dexpression=project.version -DforceStdout)"
+echo "checking log-guard $version"
+
+(cd "$here/clean-app" && mvn --batch-mode -q clean package "-Dlog-guard.version=$version")
 java -jar "$here"/clean-app/target/clean-app-0.0.1-SNAPSHOT.jar > "$output" 2>&1 || true
 
 echo "--- app output ---"

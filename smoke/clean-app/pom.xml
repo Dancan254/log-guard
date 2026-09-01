@@ -19,7 +19,6 @@
 
     <properties>
         <java.version>25</java.version>
-        <log-guard.version>0.1.0-SNAPSHOT</log-guard.version>
     </properties>
 
     <dependencies>
@@ -28,6 +27,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
+        <!-- No default on purpose: a pinned version here would go stale at the first release and
+             quietly check an artifact nobody ships. smoke/verify.sh reads the reactor version and
+             passes it in; to build this app by hand, do the same:
+             mvn package -Dlog-guard.version=0.1.0-SNAPSHOT -->
         <dependency>
             <groupId>io.github.dancan254</groupId>
             <artifactId>log-guard-spring-boot-starter</artifactId>
