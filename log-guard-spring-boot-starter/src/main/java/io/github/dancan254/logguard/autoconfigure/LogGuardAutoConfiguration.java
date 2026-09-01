@@ -5,7 +5,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
-import ch.qos.logback.classic.LoggerContext;
 import io.github.dancan254.logguard.LogGuardMasker;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
@@ -14,8 +13,9 @@ import org.springframework.context.annotation.Bean;
 
 import java.util.List;
 
+// Deliberately not conditional on any logging backend: the masker and the validator are
+// backend-agnostic, and gating them on Logback left a Log4j2 application with no validator at all.
 @AutoConfiguration
-@ConditionalOnClass(LoggerContext.class)
 @ConditionalOnProperty(prefix = "log-guard", name = "enabled", matchIfMissing = true)
 @EnableConfigurationProperties(LogGuardProperties.class)
 public class LogGuardAutoConfiguration {
