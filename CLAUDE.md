@@ -84,7 +84,10 @@ closed, because skipping the regex on long input is a leak anyone can trigger by
 The prefilter is a flat ASCII table, so a line with no trigger character never reaches the regex.
 
 Benchmarks live in `log-guard-benchmarks` (JMH), outside the normal build:
-`./mvnw -Pbench -pl log-guard-benchmarks verify`.
+`./mvnw -Pbench -pl log-guard-benchmarks verify`. CI runs them in a fast mode
+(`-Djmh.forks=1 -Djmh.warmupIterations=2 -Djmh.iterations=3`, about a minute) and fails the build
+through `check-thresholds.sh` when a score crosses its ceiling. Ceilings are ~10x the measured
+numbers on purpose: a shared runner is noisy, and a flaky performance gate gets deleted.
 
 ## Versions
 - Spring Boot 4.1.1, Java 25

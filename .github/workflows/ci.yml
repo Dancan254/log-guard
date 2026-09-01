@@ -52,3 +52,27 @@ jobs:
       # auto-configuring itself, this fails where no unit test would.
       - name: Consume the starter from a clean app
         run: ./smoke/verify.sh
+
+  benchmarks:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+      # Fewer forks and iterations than a local run: a shared runner cannot produce a publishable
+      # number, and this job is not trying to. It is checking that nothing has changed shape.
+      - name: Run the benchmarks
+        run: >
+          ./mvnw --batch-mode -Pbench -pl log-guard-benchmarks -am verify
+          -DskipTests -Djmh.forks=1 -Djmh.warmupIterations=2 -Djmh.iterations=3
+      - name: Check them against their ceilings
+        run: ./log-guard-benchmarks/check-thresholds.sh
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: benchmark-report
+          path: log-guard-benchmarks/target/benchmarks.txt
