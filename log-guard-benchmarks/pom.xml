@@ -17,6 +17,11 @@
     <properties>
         <maven.deploy.skip>true</maven.deploy.skip>
         <jmh.version>1.37</jmh.version>
+
+        <!-- Overridden in CI, where the point is catching a regression rather than a precise number. -->
+        <jmh.forks>2</jmh.forks>
+        <jmh.warmupIterations>5</jmh.warmupIterations>
+        <jmh.iterations>5</jmh.iterations>
     </properties>
 
     <dependencies>
@@ -101,6 +106,12 @@
                             <arguments>
                                 <argument>-jar</argument>
                                 <argument>${project.build.directory}/benchmarks.jar</argument>
+                                <argument>-f</argument>
+                                <argument>${jmh.forks}</argument>
+                                <argument>-wi</argument>
+                                <argument>${jmh.warmupIterations}</argument>
+                                <argument>-i</argument>
+                                <argument>${jmh.iterations}</argument>
                                 <argument>-rf</argument>
                                 <argument>text</argument>
                                 <argument>-rff</argument>

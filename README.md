@@ -118,6 +118,12 @@ The first row is the one that matters: an argument whose class carries no `@Pii`
 actually satisfies some enabled pattern's minimum requirements — before that check existed, any
 line containing a single digit paid 14 µs.
 
+CI runs the same benchmarks on every push with fewer forks and iterations, then checks each score
+against a ceiling in `log-guard-benchmarks/check-thresholds.sh`. The ceilings sit about ten times
+above the numbers above, because a shared runner cannot produce a publishable measurement and a
+benchmark that fails on noise gets deleted within a month. They are set to catch the shape of
+regression this project has already had once, where a clean line went from 126 ns to 14,000.
+
 ## Modules
 
 | Module | Purpose |
