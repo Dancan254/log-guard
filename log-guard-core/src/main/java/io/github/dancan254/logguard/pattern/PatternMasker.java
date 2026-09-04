@@ -88,7 +88,22 @@ public final class PatternMasker {
      * padding a field, so the head is masked and the unexamined tail is dropped.
      */
     private String maskWithinLimit(String message) {
-        return maskAll(message.substring(0, maxMessageLength)) + TRUNCATION_NOTICE;
+        return maskAll(message.substring(0, headLength(message))) + TRUNCATION_NOTICE;
+    }
+
+    /**
+     * Cutting at the cap can split an address or a card number, and half a token matches no pattern
+     * and is printed raw. The cut moves back to the last separator so the scanned head holds only
+     * whole tokens; with none in reach the cap stands, since a single unbroken run cannot be split
+     * into something a pattern would match anyway.
+     */
+    private int headLength(String message) {
+        for (int index = maxMessageLength; index > 0; index--) {
+            if (Character.isWhitespace(message.charAt(index))) {
+                return index;
+            }
+        }
+        return maxMessageLength;
     }
 
     private String maskAll(String message) {
