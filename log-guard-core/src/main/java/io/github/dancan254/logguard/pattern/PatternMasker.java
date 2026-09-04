@@ -11,8 +11,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import io.github.dancan254.logguard.exception.InvalidPatternException;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public final class PatternMasker {
 
@@ -52,6 +55,13 @@ public final class PatternMasker {
         for (int index = 0; index < custom.size(); index++) {
             MaskingConfig.CustomPattern pattern = custom.get(index);
             String group = "CUSTOM" + index;
+            // Compiled alone first: the combined alternation reports an offset into itself, which
+            // names neither the property at fault nor anything the reader can act on.
+            try {
+                Pattern.compile(pattern.regex());
+            } catch (PatternSyntaxException cause) {
+                throw new InvalidPatternException(pattern.name(), pattern.regex(), cause.getDescription());
+            }
             branchesByGroup.put(group, pattern.regex());
             rules.add(new Rule(group, pattern.strategy(), false));
         }
