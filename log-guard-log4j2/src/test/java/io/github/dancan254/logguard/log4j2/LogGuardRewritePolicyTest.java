@@ -13,6 +13,7 @@ import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.message.SimpleMessage;
+import org.apache.logging.log4j.message.StringFormattedMessage;
 import org.apache.logging.log4j.util.SortedArrayStringMap;
 import org.apache.logging.log4j.util.StringMap;
 import org.junit.jupiter.api.Test;
@@ -197,5 +198,15 @@ class LogGuardRewritePolicyTest {
         LogEvent source = explodingEvent();
 
         assertThatThrownBy(() -> policy.rewrite(source)).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void should_keep_the_arguments_of_a_printf_style_message() {
+        LogEvent source = event()
+                .setMessage(new StringFormattedMessage("customer=%s", new Customer()))
+                .build();
+
+        assertThat(policy.rewrite(source).getMessage().getFormattedMessage())
+                .isEqualTo("customer=Customer(id=42, email=***)");
     }
 }

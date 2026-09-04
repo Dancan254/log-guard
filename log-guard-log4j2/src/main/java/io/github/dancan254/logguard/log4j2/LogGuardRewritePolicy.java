@@ -145,7 +145,14 @@ public final class LogGuardRewritePolicy implements RewritePolicy {
         if (masked == null) {
             return formatted;
         }
-        return ParameterizedMessage.format(message.getFormat(), masked);
+        String format = message.getFormat();
+        // Only a {}-style format can be rebuilt this way. Handing ParameterizedMessage.format a
+        // printf or MessageFormat pattern returns it verbatim and every argument disappears from
+        // the line, so those keep their own rendering and the pattern layer alone.
+        if (format == null || !format.contains("{}")) {
+            return formatted;
+        }
+        return ParameterizedMessage.format(format, masked);
     }
 
     /** Returns null when no value changed, so an untouched event keeps its own context map. */
