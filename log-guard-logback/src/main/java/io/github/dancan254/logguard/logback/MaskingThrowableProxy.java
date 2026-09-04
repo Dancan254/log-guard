@@ -3,6 +3,7 @@ package io.github.dancan254.logguard.logback;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
+import io.github.dancan254.logguard.FailureMode;
 import io.github.dancan254.logguard.LogGuardMasker;
 import io.github.dancan254.logguard.mask.MaskedThrowable;
 
@@ -10,6 +11,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Exception messages are the channel that leaks without anyone writing a log statement:
@@ -33,6 +35,8 @@ public final class MaskingThrowableProxy extends ThrowableProxy {
 
     private final IThrowableProxy delegate;
     private final LogGuardMasker masker;
+
+    private final Consumer<Throwable> failureReporter;
     private final int remainingDepth;
     private final Map<IThrowableProxy, Boolean> seen;
 
@@ -43,14 +47,21 @@ public final class MaskingThrowableProxy extends ThrowableProxy {
     private IThrowableProxy[] suppressed;
 
     public MaskingThrowableProxy(IThrowableProxy delegate, LogGuardMasker masker) {
-        this(delegate, masker, MAX_DEPTH, new IdentityHashMap<>());
+        this(delegate, masker, cause -> { }, MAX_DEPTH, new IdentityHashMap<>());
+    }
+
+    public MaskingThrowableProxy(IThrowableProxy delegate, LogGuardMasker masker,
+                                 Consumer<Throwable> failureReporter) {
+        this(delegate, masker, failureReporter, MAX_DEPTH, new IdentityHashMap<>());
     }
 
     private MaskingThrowableProxy(IThrowableProxy delegate, LogGuardMasker masker,
+                                  Consumer<Throwable> failureReporter,
                                   int remainingDepth, Map<IThrowableProxy, Boolean> seen) {
         super(UNUSED, new HashSet<>());
         this.delegate = delegate;
         this.masker = masker;
+        this.failureReporter = failureReporter;
         this.remainingDepth = remainingDepth;
         this.seen = seen;
         seen.put(delegate, Boolean.TRUE);
@@ -65,7 +76,12 @@ public final class MaskingThrowableProxy extends ThrowableProxy {
         try {
             maskedMessage = masker.maskMessage(delegate.getMessage());
         } catch (RuntimeException | LinkageError cause) {
-            maskedMessage = MaskingLoggingEvent.MASKING_FAILED_MESSAGE;
+            // Reported and mode-aware like every other channel: a silent placeholder here left the
+            // one failure nobody could see in Logback's status log.
+            failureReporter.accept(cause);
+            maskedMessage = masker.onFailure() == FailureMode.PASSTHROUGH
+                    ? delegate.getMessage()
+                    : MaskingLoggingEvent.MASKING_FAILED_MESSAGE;
         }
         return maskedMessage;
     }
@@ -111,7 +127,7 @@ public final class MaskingThrowableProxy extends ThrowableProxy {
         if (target == null || remainingDepth <= 1 || seen.containsKey(target)) {
             return null;
         }
-        return new MaskingThrowableProxy(target, masker, remainingDepth - 1, seen);
+        return new MaskingThrowableProxy(target, masker, failureReporter, remainingDepth - 1, seen);
     }
 
     /**
