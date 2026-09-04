@@ -83,4 +83,40 @@ class PiiMetadataCacheTest {
     void should_report_no_pii_when_class_has_no_annotations() {
         assertThat(PiiMetadataCache.forClass(Anonymous.class).hasPii()).isFalse();
     }
+
+    /** Reached at exhausted depth through Deep, then again one field later with depth to spare. */
+    static class Inner {
+        @Pii
+        String email = "jane.wanjiru@acme.io";
+    }
+
+    static class Wrapper {
+        Inner inner = new Inner();
+    }
+
+    static class DeepThree {
+        Wrapper wrapper = new Wrapper();
+    }
+
+    static class DeepTwo {
+        DeepThree next = new DeepThree();
+    }
+
+    static class DeepOne {
+        DeepTwo next = new DeepTwo();
+    }
+
+    static class Branching {
+        DeepOne deep = new DeepOne();
+        Wrapper shallow = new Wrapper();
+    }
+
+    static class Holder {
+        Branching branching = new Branching();
+    }
+
+    @Test
+    void should_report_pii_when_a_type_is_first_reached_at_exhausted_depth() {
+        assertThat(PiiMetadataCache.forClass(Holder.class).hasPii()).isTrue();
+    }
 }

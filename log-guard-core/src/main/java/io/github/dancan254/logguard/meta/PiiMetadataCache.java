@@ -98,21 +98,27 @@ public final class PiiMetadataCache {
         if (isOpaque(candidate) || !visiting.add(candidate)) {
             return false;
         }
-        Map<String, Pii> recordAnnotations = recordAnnotationsByComponent(candidate);
-        for (Class<?> current : hierarchyFromRoot(candidate)) {
-            for (Field field : current.getDeclaredFields()) {
-                if (field.isSynthetic() || Modifier.isStatic(field.getModifiers())) {
-                    continue;
-                }
-                if (field.isAnnotationPresent(Pii.class) || recordAnnotations.containsKey(field.getName())) {
-                    return true;
-                }
-                if (declaresPii(field.getGenericType(), visiting, remainingDepth - 1)) {
-                    return true;
+        // Released on the way out: the set guards against a cycle on the current path, and holding a
+        // type after leaving it would make a deeper, depth-exhausted visit answer for a shallow one.
+        try {
+            Map<String, Pii> recordAnnotations = recordAnnotationsByComponent(candidate);
+            for (Class<?> current : hierarchyFromRoot(candidate)) {
+                for (Field field : current.getDeclaredFields()) {
+                    if (field.isSynthetic() || Modifier.isStatic(field.getModifiers())) {
+                        continue;
+                    }
+                    if (field.isAnnotationPresent(Pii.class) || recordAnnotations.containsKey(field.getName())) {
+                        return true;
+                    }
+                    if (declaresPii(field.getGenericType(), visiting, remainingDepth - 1)) {
+                        return true;
+                    }
                 }
             }
+            return false;
+        } finally {
+            visiting.remove(candidate);
         }
-        return false;
     }
 
     /** Platform and container types hold no annotations of ours; their type arguments might. */
