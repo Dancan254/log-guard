@@ -136,4 +136,22 @@ class MaskedChannelsTest {
 
         assertThat(exported).isSameAs(thrown);
     }
+
+    @Test
+    void should_export_a_throwable_when_a_suppressed_entry_sits_at_the_depth_limit() {
+        int chainLength = MaskingThrowableProxy.MAX_DEPTH + 3;
+        Throwable chain = new IllegalStateException("jane.wanjiru@acme.io exists");
+        for (int level = 1; level < chainLength; level++) {
+            chain = new RuntimeException("jane.wanjiru@acme.io at " + level, chain);
+            if (level == chainLength - MaskingThrowableProxy.MAX_DEPTH) {
+                chain.addSuppressed(new IllegalArgumentException("dropped past the limit"));
+            }
+        }
+        Throwable thrown = chain;
+        ILoggingEvent event = captured(logger -> logger.error("failed", thrown));
+
+        Throwable exported = ((ThrowableProxy) wrap(event).getThrowableProxy()).getThrowable();
+
+        assertThat(exported.getSuppressed()).isEmpty();
+    }
 }

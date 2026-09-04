@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ThrowableProxy;
 import io.github.dancan254.logguard.LogGuardMasker;
 import io.github.dancan254.logguard.mask.MaskedThrowable;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -88,11 +89,17 @@ public final class MaskingThrowableProxy extends ThrowableProxy {
             suppressed = NO_SUPPRESSED;
             return suppressed;
         }
+        // wrap() drops a proxy past the depth limit or one already seen. A hole left in this array
+        // reaches everything that iterates it, and Throwable.addSuppressed rejects a null outright.
         IThrowableProxy[] wrapped = new IThrowableProxy[original.length];
-        for (int index = 0; index < original.length; index++) {
-            wrapped[index] = wrap(original[index]);
+        int kept = 0;
+        for (IThrowableProxy each : original) {
+            IThrowableProxy replacement = wrap(each);
+            if (replacement != null) {
+                wrapped[kept++] = replacement;
+            }
         }
-        suppressed = wrapped;
+        suppressed = kept == wrapped.length ? wrapped : Arrays.copyOf(wrapped, kept);
         return suppressed;
     }
 
