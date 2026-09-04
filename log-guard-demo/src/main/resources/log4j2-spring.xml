@@ -2,7 +2,7 @@
 <Configuration>
     <Appenders>
         <Console name="CONSOLE" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %logger{28} mdc=%X - %msg%n%throwable"/>
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %logger{28} %replace{%replace{mdc=%X }{(, )?(spanId|traceId)=[0-9a-f]+}{}}{mdc=\{\} }{}- %msg%n%throwable"/>
         </Console>
 
         <!-- Every appender sits behind the rewrite, so none of them ever sees the raw event. -->

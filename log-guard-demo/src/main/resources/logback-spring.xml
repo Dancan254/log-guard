@@ -2,10 +2,11 @@
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
-    <!-- Boot's console pattern prints neither the MDC nor key-value pairs, and both are masked. -->
+    <!-- Boot's console pattern prints neither the MDC nor key-value pairs, and both are masked.
+         Each is dropped when empty, which on most lines it is. -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %-5level %logger{28} mdc=%mdc kvp=%kvp - %msg%n%throwable</pattern>
+            <pattern>%d{HH:mm:ss.SSS} %-5level %logger{28} %replace(%replace(mdc=%mdc ){'traceId=[0-9a-f]+, spanId=[0-9a-f]+(, )?', ''}){'mdc= ', ''}%replace(kvp=%kvp ){'kvp= ', ''}- %msg%n%throwable</pattern>
         </encoder>
     </appender>
 
