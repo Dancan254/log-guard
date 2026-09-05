@@ -233,8 +233,8 @@ Both are needed and neither is sufficient. Both are on by default.
 @Pii(strategy = MaskStrategy.PARTIAL, category = PiiCategory.PERSONAL)
 ```
 
-It goes on a **field**, a **record component**, or a **getter method**. Both attributes are
-optional — bare `@Pii` means `REDACT` and `PERSONAL`.
+It goes on a **field** or a **record component**. Both attributes are optional — bare `@Pii` means
+`REDACT` and `PERSONAL`.
 
 `category` does not change the output. It is metadata for your own auditing: which fields in this
 codebase hold financial data, which hold credentials. Values are `PERSONAL` (default), `SENSITIVE`,

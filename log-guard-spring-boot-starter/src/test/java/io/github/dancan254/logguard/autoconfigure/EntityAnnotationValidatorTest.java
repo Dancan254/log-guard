@@ -85,4 +85,25 @@ class EntityAnnotationValidatorTest {
     void should_not_flag_a_name_outside_the_taxonomy() {
         assertThat(PiiFieldNames.isSensitive("city")).isFalse();
     }
+
+    private static final List<String> INHERITED =
+            List.of("io.github.dancan254.logguardfixtures.inherited");
+
+    private static EntityAnnotationValidator inheritedValidator(ValidationMode mode, boolean hasHashSalt) {
+        return new EntityAnnotationValidator(mode, hasHashSalt, INHERITED,
+                EntityAnnotationValidatorTest.class.getClassLoader());
+    }
+
+    @Test
+    void should_report_an_unannotated_field_declared_on_a_mapped_superclass() {
+        assertThatThrownBy(() -> inheritedValidator(ValidationMode.FAIL, true).afterPropertiesSet())
+                .isInstanceOf(UnannotatedEntityException.class)
+                .hasMessageContaining("email");
+    }
+
+    @Test
+    void should_reject_a_hash_strategy_inherited_from_a_mapped_superclass_when_no_salt_is_configured() {
+        assertThatThrownBy(() -> inheritedValidator(ValidationMode.WARN, false).afterPropertiesSet())
+                .isInstanceOf(MissingHashSaltException.class);
+    }
 }

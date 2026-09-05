@@ -165,7 +165,7 @@ public final class MaskingLoggingEvent implements ILoggingEvent {
             IThrowableProxy original = delegate.getThrowableProxy();
             maskedThrowableProxy = original == null
                     ? null
-                    : new MaskingThrowableProxy(original, masker);
+                    : new MaskingThrowableProxy(original, masker, failureReporter);
         }
         return maskedThrowableProxy;
     }

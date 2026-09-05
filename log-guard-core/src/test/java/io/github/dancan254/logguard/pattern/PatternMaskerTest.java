@@ -3,6 +3,7 @@ package io.github.dancan254.logguard.pattern;
 import io.github.dancan254.logguard.BuiltInPattern;
 import io.github.dancan254.logguard.MaskStrategy;
 import io.github.dancan254.logguard.MaskingConfig;
+import io.github.dancan254.logguard.exception.InvalidPatternException;
 import io.github.dancan254.logguard.mask.ValueMasker;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +11,7 @@ import java.time.Duration;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 class PatternMaskerTest {
@@ -79,5 +81,15 @@ class PatternMaskerTest {
         String adversarial = "a".repeat(5_000) + "@" + "1".repeat(5_000);
 
         assertTimeoutPreemptively(Duration.ofSeconds(1), () -> masker.mask(adversarial));
+    }
+
+    @Test
+    void should_name_the_custom_pattern_when_its_regex_does_not_compile() {
+        List<MaskingConfig.CustomPattern> custom =
+                List.of(new MaskingConfig.CustomPattern("employee-id", "EMP-[0-9", MaskStrategy.REDACT));
+
+        assertThatThrownBy(() -> new PatternMasker(List.of(), custom, new ValueMasker("pepper")))
+                .isInstanceOf(InvalidPatternException.class)
+                .hasMessageContaining("employee-id");
     }
 }

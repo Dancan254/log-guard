@@ -119,8 +119,21 @@ class EntityAnnotationValidator implements InitializingBean {
         }
     }
 
+    /**
+     * A @MappedSuperclass holds the fields Lombok's toString on the subclass still prints, so a
+     * scan of the declared fields alone advises on half the entity.
+     */
+    private static List<Field> fieldsIncludingInherited(Class<?> entity) {
+        List<Field> fields = new ArrayList<>();
+        for (Class<?> current = entity; current != null && current != Object.class;
+                current = current.getSuperclass()) {
+            fields.addAll(List.of(current.getDeclaredFields()));
+        }
+        return fields;
+    }
+
     private static boolean usesHashStrategy(Class<?> entity) {
-        for (Field field : entity.getDeclaredFields()) {
+        for (Field field : fieldsIncludingInherited(entity)) {
             Pii annotation = field.getAnnotation(Pii.class);
             if (annotation != null && annotation.strategy() == MaskStrategy.HASH) {
                 return true;
@@ -138,7 +151,7 @@ class EntityAnnotationValidator implements InitializingBean {
             return List.of();
         }
         List<String> unannotated = new ArrayList<>();
-        for (Field field : entity.getDeclaredFields()) {
+        for (Field field : fieldsIncludingInherited(entity)) {
             if (field.isSynthetic() || Modifier.isStatic(field.getModifiers())) {
                 continue;
             }

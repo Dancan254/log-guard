@@ -73,8 +73,11 @@ public final class LogGuardModule extends SimpleModule {
                 if (annotation.strategy() == MaskStrategy.DROP) {
                     continue;
                 }
-                property.assignSerializer(new MaskingSerializer(valueMasker, annotation.strategy()));
-                replaced.add(property);
+                // A copy rather than assignSerializer: that method refuses to overwrite a serializer
+                // the property already has, so a field carrying both @Pii and @JsonSerialize failed
+                // the whole serialization. Masking wins the tie — this module exists for that.
+                replaced.add(new MaskedPropertyWriter(property,
+                        new MaskingSerializer(valueMasker, annotation.strategy())));
             }
             return replaced;
         }
@@ -82,6 +85,14 @@ public final class LogGuardModule extends SimpleModule {
         private static Pii annotationOn(BeanPropertyWriter property) {
             AnnotatedMember member = property.getMember();
             return member == null ? null : member.getAnnotation(Pii.class);
+        }
+    }
+
+    private static final class MaskedPropertyWriter extends BeanPropertyWriter {
+
+        private MaskedPropertyWriter(BeanPropertyWriter base, ValueSerializer<Object> serializer) {
+            super(base);
+            _serializer = serializer;
         }
     }
 

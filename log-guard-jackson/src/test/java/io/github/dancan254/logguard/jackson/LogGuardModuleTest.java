@@ -4,6 +4,10 @@ import io.github.dancan254.logguard.MaskStrategy;
 import io.github.dancan254.logguard.Pii;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.annotation.JsonSerialize;
 import tools.jackson.databind.json.JsonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,5 +55,24 @@ class LogGuardModuleTest {
         ObjectMapper plain = JsonMapper.builder().build();
 
         assertThat(plain.writeValueAsString(customer())).contains("jane.wanjiru@acme.io");
+    }
+
+    public static class Shouty extends ValueSerializer<String> {
+        @Override
+        public void serialize(String value, JsonGenerator generator, SerializationContext context) {
+            generator.writeString(value.toUpperCase());
+        }
+    }
+
+    public record Explicit(
+            @Pii(strategy = MaskStrategy.PARTIAL)
+            @JsonSerialize(using = Shouty.class)
+            String email) {
+    }
+
+    @Test
+    void should_mask_a_property_that_already_declares_its_own_serializer() {
+        assertThat(masking.writeValueAsString(new Explicit("jane.wanjiru@acme.io")))
+                .isEqualTo("{\"email\":\"j****@acme.io\"}");
     }
 }

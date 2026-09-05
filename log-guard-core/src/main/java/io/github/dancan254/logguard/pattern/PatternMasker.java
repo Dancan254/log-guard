@@ -11,8 +11,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import io.github.dancan254.logguard.exception.InvalidPatternException;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public final class PatternMasker {
 
@@ -52,6 +55,13 @@ public final class PatternMasker {
         for (int index = 0; index < custom.size(); index++) {
             MaskingConfig.CustomPattern pattern = custom.get(index);
             String group = "CUSTOM" + index;
+            // Compiled alone first: the combined alternation reports an offset into itself, which
+            // names neither the property at fault nor anything the reader can act on.
+            try {
+                Pattern.compile(pattern.regex());
+            } catch (PatternSyntaxException cause) {
+                throw new InvalidPatternException(pattern.name(), pattern.regex(), cause.getDescription());
+            }
             branchesByGroup.put(group, pattern.regex());
             rules.add(new Rule(group, pattern.strategy(), false));
         }
@@ -88,7 +98,22 @@ public final class PatternMasker {
      * padding a field, so the head is masked and the unexamined tail is dropped.
      */
     private String maskWithinLimit(String message) {
-        return maskAll(message.substring(0, maxMessageLength)) + TRUNCATION_NOTICE;
+        return maskAll(message.substring(0, headLength(message))) + TRUNCATION_NOTICE;
+    }
+
+    /**
+     * Cutting at the cap can split an address or a card number, and half a token matches no pattern
+     * and is printed raw. The cut moves back to the last separator so the scanned head holds only
+     * whole tokens; with none in reach the cap stands, since a single unbroken run cannot be split
+     * into something a pattern would match anyway.
+     */
+    private int headLength(String message) {
+        for (int index = maxMessageLength; index > 0; index--) {
+            if (Character.isWhitespace(message.charAt(index))) {
+                return index;
+            }
+        }
+        return maxMessageLength;
     }
 
     private String maskAll(String message) {

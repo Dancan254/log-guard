@@ -71,7 +71,7 @@ class AdversarialInputTest {
 
         String masked = masker.mask("jane.wanjiru@acme.io " + repeat("x", 200));
 
-        assertThat(masked).startsWith("*** ").doesNotContain("jane.wanjiru");
+        assertThat(masked).startsWith("***").doesNotContain("jane.wanjiru");
     }
 
     @Test
@@ -92,5 +92,17 @@ class AdversarialInputTest {
         String masked = masker.mask(repeat("x", 32));
 
         assertThat(masked).isEqualTo(repeat("x", 32));
+    }
+
+    @Test
+    void should_not_emit_the_head_of_an_address_split_by_the_cap() {
+        PatternMasker masker = new PatternMasker(List.of(BuiltInPattern.EMAIL), List.of(),
+                new ValueMasker("pepper"), 32);
+
+        // The cap lands inside the address, so the fragment before it matches no pattern and the
+        // old cut printed it raw. Any part of the local part surviving is the leak.
+        String masked = masker.mask(repeat("x", 24) + " jane.wanjiru@acme.io");
+
+        assertThat(masked).doesNotContain("jane");
     }
 }

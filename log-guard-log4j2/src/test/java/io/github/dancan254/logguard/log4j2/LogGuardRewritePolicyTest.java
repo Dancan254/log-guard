@@ -10,8 +10,10 @@ import io.github.dancan254.logguard.Pii;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
+import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.message.SimpleMessage;
+import org.apache.logging.log4j.message.StringFormattedMessage;
 import org.apache.logging.log4j.util.SortedArrayStringMap;
 import org.apache.logging.log4j.util.StringMap;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LogGuardRewritePolicyTest {
 
@@ -138,5 +141,72 @@ class LogGuardRewritePolicyTest {
 
         assertThat(rewritten.getLoggerName()).isEqualTo("test");
         assertThat(rewritten.getLevel()).isEqualTo(Level.INFO);
+    }
+
+    /** Masking cannot start without a formatted message, so this fails the whole rewrite. */
+    static class ExplodingMessage implements Message {
+
+        @Override
+        public String getFormattedMessage() {
+            throw new IllegalStateException("formatting blew up");
+        }
+
+        @Override
+        public String getFormat() {
+            return "customer {}";
+        }
+
+        @Override
+        public Object[] getParameters() {
+            return new Object[]{"jane.wanjiru@acme.io"};
+        }
+
+        @Override
+        public Throwable getThrowable() {
+            return null;
+        }
+    }
+
+    private static LogGuardRewritePolicy policyFailing(FailureMode mode) {
+        return LogGuardRewritePolicy.using(new LogGuardMasker(new MaskingConfig(true, true,
+                List.of(BuiltInPattern.EMAIL), List.of(), "pepper", Set.of(),
+                NestingConfig.DEFAULT, mode, MaskingConfig.DEFAULT_MAX_MESSAGE_LENGTH)));
+    }
+
+    private static LogEvent explodingEvent() {
+        return event().setMessage(new ExplodingMessage()).build();
+    }
+
+    @Test
+    void should_withhold_the_payload_when_masking_fails_and_mode_is_placeholder() {
+        LogEvent rewritten = policyFailing(FailureMode.PLACEHOLDER).rewrite(explodingEvent());
+
+        assertThat(rewritten.getMessage().getFormattedMessage())
+                .isEqualTo(LogGuardRewritePolicy.MASKING_FAILED_MESSAGE);
+    }
+
+    @Test
+    void should_return_the_original_event_when_masking_fails_and_mode_is_passthrough() {
+        LogEvent source = explodingEvent();
+
+        assertThat(policyFailing(FailureMode.PASSTHROUGH).rewrite(source)).isSameAs(source);
+    }
+
+    @Test
+    void should_let_log4j2_discard_the_event_when_masking_fails_and_mode_is_drop() {
+        LogGuardRewritePolicy policy = policyFailing(FailureMode.DROP);
+        LogEvent source = explodingEvent();
+
+        assertThatThrownBy(() -> policy.rewrite(source)).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void should_keep_the_arguments_of_a_printf_style_message() {
+        LogEvent source = event()
+                .setMessage(new StringFormattedMessage("customer=%s", new Customer()))
+                .build();
+
+        assertThat(policy.rewrite(source).getMessage().getFormattedMessage())
+                .isEqualTo("customer=Customer(id=42, email=***)");
     }
 }

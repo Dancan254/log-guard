@@ -1,5 +1,6 @@
 package io.github.dancan254.logguard.log4j2;
 
+import io.github.dancan254.logguard.FailureMode;
 import io.github.dancan254.logguard.LogGuardMasker;
 import io.github.dancan254.logguard.mask.ThrowableMasker;
 import org.apache.logging.log4j.core.Core;
@@ -11,6 +12,7 @@ import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.message.SimpleMessage;
+import org.apache.logging.log4j.status.StatusLogger;
 import org.apache.logging.log4j.util.ReadOnlyStringMap;
 import org.apache.logging.log4j.util.SortedArrayStringMap;
 import org.apache.logging.log4j.util.StringMap;
@@ -24,6 +26,9 @@ import java.util.Map;
 @Plugin(name = "LogGuardRewritePolicy", category = Core.CATEGORY_NAME,
         elementType = "rewritePolicy", printObject = true)
 public final class LogGuardRewritePolicy implements RewritePolicy {
+
+    static final String MASKING_FAILED_MESSAGE =
+            "[log-guard] masking failed for this event, payload withheld";
 
     private final LogGuardMasker fixedMasker;
 
@@ -51,7 +56,40 @@ public final class LogGuardRewritePolicy implements RewritePolicy {
         if (masker == null) {
             return source;
         }
-        return rewrite(source, masker);
+        try {
+            return rewrite(source, masker);
+        } catch (RuntimeException | LinkageError cause) {
+            return onMaskingFailure(source, masker, cause);
+        }
+    }
+
+    /**
+     * The rewrite point has no way to discard an event — RewriteAppender passes whatever comes back
+     * straight to its appenders — so DROP rethrows and lets Log4j2 discard the event itself.
+     */
+    private LogEvent onMaskingFailure(LogEvent source, LogGuardMasker masker, Throwable cause) {
+        StatusLogger.getLogger().warn("log-guard could not mask an event", cause);
+        if (masker.onFailure() == FailureMode.PASSTHROUGH) {
+            return source;
+        }
+        if (masker.onFailure() == FailureMode.DROP) {
+            if (cause instanceof RuntimeException runtime) {
+                throw runtime;
+            }
+            throw (LinkageError) cause;
+        }
+        // Built field by field rather than from the source event: Log4jLogEvent.Builder(LogEvent)
+        // formats the source message, which is one of the things that can have just thrown. The
+        // context map is left behind with the payload, since it is a channel that carries PII too.
+        return Log4jLogEvent.newBuilder()
+                .setLoggerName(source.getLoggerName())
+                .setLoggerFqcn(source.getLoggerFqcn())
+                .setLevel(source.getLevel())
+                .setMarker(source.getMarker())
+                .setMessage(new SimpleMessage(MASKING_FAILED_MESSAGE))
+                .setTimeMillis(source.getTimeMillis())
+                .setThreadName(source.getThreadName())
+                .build();
     }
 
     private LogEvent rewrite(LogEvent source, LogGuardMasker masker) {
@@ -107,7 +145,14 @@ public final class LogGuardRewritePolicy implements RewritePolicy {
         if (masked == null) {
             return formatted;
         }
-        return ParameterizedMessage.format(message.getFormat(), masked);
+        String format = message.getFormat();
+        // Only a {}-style format can be rebuilt this way. Handing ParameterizedMessage.format a
+        // printf or MessageFormat pattern returns it verbatim and every argument disappears from
+        // the line, so those keep their own rendering and the pattern layer alone.
+        if (format == null || !format.contains("{}")) {
+            return formatted;
+        }
+        return ParameterizedMessage.format(format, masked);
     }
 
     /** Returns null when no value changed, so an untouched event keeps its own context map. */
