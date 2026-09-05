@@ -6,6 +6,17 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **`log-guard-demo` is no longer published.** The module set `maven.deploy.skip`, which governs
+  `maven-deploy-plugin` only; the Central publishing plugin reads its own `skipPublishing` and
+  ignored it, so `log-guard-demo` 0.1.0 was uploaded along with the libraries. Both properties are
+  now set on the demo and on `log-guard-benchmarks`.
+
+  `io.github.dancan254:log-guard-demo:0.1.0` remains on Maven Central and cannot be withdrawn, since
+  a released version is never removed. It is a runnable sample application rather than a library and
+  should not be depended on. No later version will be published.
+
 ## [0.1.0] — 2026-09-01
 
 First release. Masks personal data at the logging-event level, so console, file and OTLP exports

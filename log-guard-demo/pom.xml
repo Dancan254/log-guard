@@ -15,7 +15,11 @@
     <description>Runnable demo. Never published — it exists so the library can be watched working.</description>
 
     <properties>
+        <!-- Both are needed. maven.deploy.skip stops maven-deploy-plugin; the Central publishing
+             plugin reads its own skipPublishing and ignores that property, which is how 0.1.0 of
+             this module reached Maven Central. -->
         <maven.deploy.skip>true</maven.deploy.skip>
+        <skipPublishing>true</skipPublishing>
         <opentelemetry-logback-appender.version>2.30.0-alpha</opentelemetry-logback-appender.version>
         <opentelemetry-api-incubator.version>1.62.0-alpha</opentelemetry-api-incubator.version>
         <lombok.version>1.18.46</lombok.version>
