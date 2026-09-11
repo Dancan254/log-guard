@@ -7,7 +7,7 @@
 
     <groupId>io.github.dancan254</groupId>
     <artifactId>log-guard</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <packaging>pom</packaging>
 
     <name>log-guard</name>
@@ -124,7 +124,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>25</maven.compiler.release>
         <!-- Fixed per release, so the same source tree always produces byte-identical jars. -->
-        <project.build.outputTimestamp>2026-09-01T00:00:00Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2026-09-11T00:00:00Z</project.build.outputTimestamp>
         <spring-boot.version>4.1.1</spring-boot.version>
     </properties>
 

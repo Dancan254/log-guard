@@ -6,8 +6,13 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-09-11
+
 ### Fixed
 
+- **Maven Central links point at the repository.** Maven appends the artifactId to an inherited
+  `url` and `scm`, so every module's project and source links led to a non-existent
+  `github.com/Dancan254/log-guard/<module>` path. The reactor pom now turns that off.
 - **`log-guard-demo` is no longer published.** The module set `maven.deploy.skip`, which governs
   `maven-deploy-plugin` only; the Central publishing plugin reads its own `skipPublishing` and
   ignored it, so `log-guard-demo` 0.1.0 was uploaded along with the libraries. Both properties are
@@ -62,5 +67,6 @@ all see the same redacted output.
   policy runs, so only the pattern layer applies to them.
 - A bare name logged as a plain string is undetectable, by either layer.
 
-[Unreleased]: https://github.com/Dancan254/log-guard/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Dancan254/log-guard/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/Dancan254/log-guard/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Dancan254/log-guard/releases/tag/v0.1.0
