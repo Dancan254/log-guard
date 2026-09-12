@@ -1,0 +1,46 @@
+name: Feature request
+description: Propose a change to the API, the configuration or a module
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Configuration properties and `@Pii` are public API and effectively permanent, so proposals
+        are discussed before code exists. See
+        [CONTRIBUTING.md](https://github.com/Dancan254/log-guard/blob/main/CONTRIBUTING.md).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What leaks, or what cannot be expressed today. Describe the situation, not the fix.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you propose
+      description: The annotation, property or module, and how it would look in use.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you tried instead
+      description: >
+        Existing strategies, a custom pattern, mdc.redact-keys, or the Jackson module. Say why they
+        do not cover it.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Constraints this respects
+      description: These are the invariants the library is built on.
+      options:
+        - label: It does not add a dependency to log-guard-core.
+        - label: Masking still happens on the logging event, not in a layout or an encoder.
+        - label: There is no path where a failure emits unmasked output.

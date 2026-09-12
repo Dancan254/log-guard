@@ -19,6 +19,39 @@ so console, file and OTLP exports all see the same redacted output.
 
 ---
 
+**New here?** [Installation](#installation) → [Quick start](#quick-start) →
+[Configuration reference](#configuration-reference). If something is not masked,
+[Troubleshooting](#troubleshooting) covers the usual causes.
+
+<details>
+<summary>Full contents</summary>
+
+- [The problem](#the-problem)
+- [Why the event and not the layout](#why-the-event-and-not-the-layout)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Two layers, both necessary](#two-layers-both-necessary)
+- [What gets masked](#what-gets-masked)
+- [Masking strategies](#masking-strategies)
+- [The `@Pii` annotation](#the-pii-annotation)
+- [Nested objects](#nested-objects)
+- [Pattern masking](#pattern-masking)
+- [The startup validator](#the-startup-validator)
+- [Configuration reference](#configuration-reference)
+- [Recipes](#recipes) — [OpenTelemetry](#exporting-to-opentelemetry) ·
+  [Log4j2](#log4j2-instead-of-logback) · [JSON logs](#json-encoded-logs) ·
+  [MDC keys](#redacting-mdc-keys-wholesale)
+- [Try it](#try-it)
+- [Troubleshooting](#troubleshooting)
+- [Limitations](#limitations)
+- [Performance](#performance)
+- [Modules](#modules)
+- [Building](#building)
+- [Contributing](#contributing)
+- [Licence](#licence)
+
+</details>
+
 ## The problem
 
 Every logging framework will print whatever you hand it. An entity with a generated `toString`
@@ -80,6 +113,8 @@ masks lazily.
 
 ## Installation
 
+**Maven**
+
 ```xml
 <dependency>
     <groupId>io.github.dancan254</groupId>
@@ -88,14 +123,42 @@ masks lazily.
 </dependency>
 ```
 
-Requires Java 25 and Spring Boot 4. Logback comes from your application. There is no appender to
-declare and nothing to switch on.
+**Gradle**
+
+```kotlin
+implementation("io.github.dancan254:log-guard-spring-boot-starter:0.1.1")
+```
+
+That is the only artifact you declare. Logback comes from your application, there is no appender to
+register and nothing to switch on. The other modules are pulled in for you, except the two
+alternative backends: `log-guard-log4j2` and `log-guard-jackson` are opt-in.
+
+**Requirements**
+
+| | |
+| :--- | :--- |
+| Java | 25 or later |
+| Spring Boot | 4.0 or later |
+| Logging backend | Logback (default) or Log4j2 |
+
+The published jars are Java 25 bytecode and compile against Spring Boot 4 APIs, so they cannot be
+dropped into a Boot 3 or Java 17 application. No backport is published. If you are still on Boot 3,
+the masking engine in `log-guard-core` has no Spring dependency and can be driven directly, but you
+would be wiring the Logback adapter yourself.
+
+API documentation is published with every release:
+[javadoc.io/doc/io.github.dancan254/log-guard-core](https://javadoc.io/doc/io.github.dancan254/log-guard-core).
 
 ## Quick start
 
 **1. Annotate the fields that hold personal data.**
 
+The whole public API lives in one package, so one import covers it:
+
 ```java
+import io.github.dancan254.logguard.Pii;
+import io.github.dancan254.logguard.MaskStrategy;
+
 public record Customer(
         Long id,
         @Pii(strategy = MaskStrategy.HASH)    String email,
@@ -437,6 +500,82 @@ both the console and the collector.
   -Dspring-boot.run.arguments=--log-guard.enabled=false
 ```
 
+## Troubleshooting
+
+### Nothing is masked at all
+
+log-guard installs itself before the first log line and **prints no banner**, so there is no
+startup message confirming it is active. Check, in this order:
+
+1. The starter is on the classpath. `log-guard-core` alone masks nothing on its own — the starter
+   is what wires it into Logback.
+2. `log-guard.enabled` is not `false`, and neither is `log-guard.type-aware.enabled`.
+3. The class you are logging carries at least one `@Pii`. A class with no annotation is left to its
+   own `toString()`.
+4. You are passing the object, not a string. `log.info("{}", customer)` is type aware;
+   `log.info("customer " + customer)` has already been rendered by the time log-guard sees it, and
+   only the pattern layer can help.
+
+The quickest confirmation is a comparison. Run your app normally, then again with masking off, and
+diff a line you care about:
+
+```bash
+--log-guard.enabled=false
+```
+
+### Some lines are masked and others are not
+
+- Anything logged **before** the starter installs — Boot's banner and its own first startup lines —
+  is out of reach.
+- Output from code you do not own has no annotations to read, so it depends on the pattern layer.
+  Hibernate bind parameters and driver exception messages are covered; a bare name in prose is not.
+- On Log4j2, SLF4J key-value pairs arrive as strings and get the pattern layer only. Name the key
+  in `log-guard.mdc.redact-keys` to close that gap.
+
+### The application will not start
+
+| Exception | Cause |
+| :--- | :--- |
+| `MissingHashSaltException` | A field or custom pattern uses `HASH` with a blank `log-guard.hash-salt`. |
+| `InvalidPatternException` | A custom pattern's `regex` does not compile. |
+| `UnannotatedEntityException` | `log-guard.validation.unannotated-entity: FAIL` found an entity that leaks. |
+
+### A startup warning about an entity
+
+The validator found an `@Entity` that declares a `toString()` and holds a field whose name is in
+the personal data taxonomy but carries no `@Pii`. Annotate the field, or use
+`@Pii(strategy = DROP)` to leave it out of the output entirely. Lombok's `@ToString.Exclude` cannot
+silence the finding, because it is source-retained and invisible at runtime.
+
+To turn the check off, set `log-guard.validation.unannotated-entity: OFF` — but `FAIL` in CI is how
+a new unannotated `email` column gets stopped before production.
+
+### The console is masked but OTLP still carries raw data
+
+`OpenTelemetryAppender.install()` inspects only a logger's **top-level** appenders, so it never
+finds the one log-guard has wrapped. Hand it the SDK through the wrapper:
+[Exporting to OpenTelemetry](#exporting-to-opentelemetry).
+
+This is also why span exceptions stay unmasked — they never pass through a logging backend at all.
+
+### A long line ends in a truncation notice
+
+The pattern layer scans up to `log-guard.patterns.max-message-length` (8192). Past the cap the head
+is masked and the tail is replaced, because skipping the regex on long input is a leak anyone can
+trigger by padding a field. Raise the cap if your lines are legitimately longer.
+
+### Something is masked that should not be
+
+A built-in pattern is matching too broadly. Drop it from `log-guard.patterns.built-in` — the list
+you set replaces the defaults. `KENYAN_NATIONAL_ID` is the usual culprit and ships disabled for
+exactly this reason.
+
+### A nested object is not being rendered
+
+Nesting stops at depth 3 and 10 elements per collection, and reflection only enters classes that
+carry `@Pii` or declare a field whose type does. If you set
+`log-guard.nesting.base-packages`, a class outside those packages is skipped.
+
 ## Limitations
 
 * Anything logged before the starter installs, such as Boot's banner and its own first startup
@@ -493,7 +632,24 @@ dependency tree is a harder sell to the team that has to approve it.
 ./mvnw package     # module jars
 ```
 
-Architecture record: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+## Contributing
+
+Pull requests are welcome. [`CONTRIBUTING.md`](CONTRIBUTING.md) has the build commands, the test
+conventions and the invariants a change has to respect — chiefly that `log-guard-core` stays
+dependency-free and that masking happens on the event rather than in a layout.
+
+| Document | What is in it |
+| :--- | :--- |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to build, test, commit and open a pull request. |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Why the design is shaped this way. |
+| [`AGENTS.md`](AGENTS.md) | Instructions for AI coding agents working in this repository. |
+| [`docs/RELEASING.md`](docs/RELEASING.md) | The Maven Central runbook. Maintainers only. |
+| [`SECURITY.md`](SECURITY.md) | How to report a masking bypass privately. |
+| [`CHANGELOG.md`](CHANGELOG.md) | What changed in each release. |
+
+Found personal data reaching an appender unmasked? That is a vulnerability rather than a bug —
+please report it through the [Security tab](https://github.com/Dancan254/log-guard/security/advisories)
+instead of a public issue.
 
 ## Licence
 

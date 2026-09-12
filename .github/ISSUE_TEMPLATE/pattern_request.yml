@@ -1,0 +1,60 @@
+name: Pattern request
+description: Propose a new built-in pattern, or report a false positive in an existing one
+labels: ["patterns"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A pattern that **misses** a real value is a masking bypass — report that privately through
+        the [Security tab](https://github.com/Dancan254/log-guard/security/advisories) instead.
+
+        This template is for a new pattern, or for a pattern matching something it should not.
+
+        Never paste real personal data. Use synthetic values.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is this
+      options:
+        - A new built-in pattern
+        - A false positive in an existing pattern
+    validations:
+      required: true
+
+  - type: input
+    id: pattern
+    attributes:
+      label: Pattern
+      description: The existing pattern name, or what the new one would detect.
+      placeholder: "EMAIL, or: Ethiopian national ID"
+    validations:
+      required: true
+
+  - type: textarea
+    id: should_match
+    attributes:
+      label: Must match
+      description: Synthetic examples that have to be masked.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: should_not_match
+    attributes:
+      label: Must not match
+      description: >
+        The important half. A bare digit run is also an order number, a row count and a port, which
+        is why KENYAN_NATIONAL_ID ships disabled. What must this pattern leave alone?
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: default
+    attributes:
+      label: Enabled by default?
+      description: Say yes or no, and why. A pattern with plausible false positives ships disabled.
+    validations:
+      required: true

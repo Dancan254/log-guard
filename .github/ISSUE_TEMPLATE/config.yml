@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a masking bypass privately
+    url: https://github.com/Dancan254/log-guard/security/advisories
+    about: Personal data reaching an appender unmasked is a vulnerability, not a public issue.
+  - name: How to contribute
+    url: https://github.com/Dancan254/log-guard/blob/main/CONTRIBUTING.md
+    about: Build commands, test conventions, and the invariants a change has to respect.

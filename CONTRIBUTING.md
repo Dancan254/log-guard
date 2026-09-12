@@ -167,6 +167,15 @@ means a failure is usually real.
 User-visible changes get an entry under `## [Unreleased]` in `CHANGELOG.md`. Internal refactors and
 test-only changes do not.
 
+## Reporting a security issue
+
+Personal data reaching an appender unmasked is a vulnerability, not a bug. Do not open a public
+issue for it — use GitHub's private vulnerability reporting, described in
+[SECURITY.md](SECURITY.md), which also lists what counts as a bypass.
+
+A false positive, something masked that should not have been, is a normal bug. That one belongs in
+a public issue.
+
 ## Releasing
 
 Maintainers only, and documented separately in [`docs/RELEASING.md`](docs/RELEASING.md). Publishing
