@@ -1,0 +1,24 @@
+version: 2
+updates:
+  # The Boot BOM owns most versions, so this mostly surfaces plugin and BOM bumps. A Testcontainers
+  # major arrives as a Boot upgrade, never as a version override.
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      maven-plugins:
+        patterns:
+          - "org.apache.maven.plugins:*"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "ci(deps)"
