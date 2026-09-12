@@ -1,9 +1,13 @@
-# log-guard — implementation plan (v0.1 → v0.3)
+# log-guard — implementation plan (build record)
 
 > **All eight phases are delivered and merged** (PRs #1–#7, 2026-08-30 → 2026-09-01). The plan is
 > kept as the record of what was decided before the code was written. Where the build disagreed
 > with the plan, the plan has been corrected in place and the disagreement is listed under
 > [What the build changed](#what-the-build-changed).
+>
+> The v0.1 → v0.3 staging below is what was planned, not what is left. All eight phases shipped in
+> **0.1.0** on 2026-09-01, so no version beyond it was ever reached or is owed. Releases from there
+> on are recorded in `CHANGELOG.md`, and the numbering rules are in `CLAUDE.md`.
 
 Claude writes the implementation. You review each phase and run the manual checkpoint at the end
 of it. Nothing moves to the next phase until you say the checkpoint passed.
@@ -27,7 +31,7 @@ Supersedes the hand-written learning plan. Architecture record: `docs/ARCHITECTU
 
 ## Phase map
 
-| # | Phase | Ships | Your checkpoint |
+| # | Phase | Planned for | Your checkpoint |
 |---|---|---|---|
 | 1 | Core masking engine | v0.1 | `./mvnw -pl log-guard-core test` + read printed before/after |
 | 2 | Logback event wrapping | v0.1 | `./mvnw -pl log-guard-logback test` |
