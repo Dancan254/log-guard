@@ -11,6 +11,8 @@ A Spring Boot starter that masks personal data at the Logback event level,
 so console, file and OTLP exports all see the same redacted output.
 
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.dancan254/log-guard-spring-boot-starter?style=flat-square&color=f0196a&label=maven%20central)](https://central.sonatype.com/artifact/io.github.dancan254/log-guard-spring-boot-starter)
+[![Build](https://img.shields.io/github/actions/workflow/status/Dancan254/log-guard/ci.yml?branch=main&style=flat-square&label=build)](https://github.com/Dancan254/log-guard/actions/workflows/ci.yml)
+[![Javadoc](https://img.shields.io/badge/javadoc-latest-blue?style=flat-square)](https://javadoc.io/doc/io.github.dancan254/log-guard-core)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square)](LICENSE)
 [![Java](https://img.shields.io/badge/java-25-orange?style=flat-square)](https://openjdk.org/projects/jdk/25/)
 [![Spring Boot](https://img.shields.io/badge/spring%20boot-4.1-6DB33F?style=flat-square)](https://spring.io/projects/spring-boot)
@@ -645,6 +647,7 @@ dependency-free and that masking happens on the event rather than in a layout.
 | [`AGENTS.md`](AGENTS.md) | Instructions for AI coding agents working in this repository. |
 | [`docs/RELEASING.md`](docs/RELEASING.md) | The Maven Central runbook. Maintainers only. |
 | [`SECURITY.md`](SECURITY.md) | How to report a masking bypass privately. |
+| [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) | The Contributor Covenant, and how to report a breach. |
 | [`CHANGELOG.md`](CHANGELOG.md) | What changed in each release. |
 
 Found personal data reaching an appender unmasked? That is a vulnerability rather than a bug —

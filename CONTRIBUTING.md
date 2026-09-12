@@ -182,6 +182,13 @@ Maintainers only, and documented separately in [`docs/RELEASING.md`](docs/RELEAS
 is deliberately not push-button: a tag stages a deployment and a human clicks Publish, because a
 released version can never be withdrawn.
 
+## Code of conduct
+
+Participation in this project is governed by the
+[Contributor Covenant](CODE_OF_CONDUCT.md). Report unacceptable behaviour through a
+[private advisory](https://github.com/Dancan254/log-guard/security/advisories), which only the
+maintainers can read.
+
 ## Licence
 
 Contributions are made under the Apache 2.0 licence, as in [LICENSE](LICENSE).
