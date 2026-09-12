@@ -118,6 +118,10 @@ The scope is the module or feature slice, e.g. `fix(patterns): stop matching a b
 **Never push to `main`.** Every change arrives through a pull request, so that CI has run before
 anything lands.
 
+The maintainer commits documentation and release chores — a changelog entry, a version bump, a
+corrected link — straight to `main`. Every change to library code goes through a pull request, no
+matter who wrote it.
+
 ```bash
 git checkout main && git pull
 git checkout -b fix/short-kebab-description

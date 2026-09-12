@@ -95,7 +95,10 @@ Comments explain why, never what. No `// TODO` in committed code.
 - Conventional commits: `type(scope): short description`, imperative, lowercase, no period, max 72
   characters. A body only when the why is non-obvious. Never `wip`, `updates` or `fix stuff`.
 - Branch `type/short-kebab-description` from `main`, one concern per branch.
-- **Never commit or push directly to `main`.** Work on a branch and open a pull request.
+- **Never commit or push directly to `main` on your own initiative.** Work on a branch and open a
+  pull request. The maintainer may ask you to commit a documentation or release chore straight to
+  `main`; that is their call to make, never yours to assume. Library code goes through a pull
+  request regardless of who asks.
 - **Never push, and never open a pull request, without being asked.** Committing locally is fine;
   anything that leaves the machine is the maintainer's decision.
 - Never force-push, never amend or rebase a commit that has already been pushed, and never revert
