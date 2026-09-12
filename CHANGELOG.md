@@ -15,6 +15,8 @@ All notable changes to this project are recorded here. The format follows
   raw data, truncation, over-broad patterns and skipped nesting.
 - `CONTRIBUTING.md`, `AGENTS.md` and `SECURITY.md`, plus issue and pull request templates. A
   masking bypass is now routed to private vulnerability reporting rather than a public issue.
+- `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), a Dependabot configuration for Maven and GitHub
+  Actions, and a weekly CodeQL analysis. Build and javadoc badges in the readme.
 
 ## [0.1.1] — 2026-09-11
 

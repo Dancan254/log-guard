@@ -1,0 +1,41 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # A weekly run catches a rule added after the code was last touched.
+    - cron: '27 4 * * 1'
+
+jobs:
+  analyze:
+    name: Analyze Java
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: java-kotlin
+          build-mode: manual
+          queries: security-and-quality
+
+      # Built explicitly rather than by autobuild, so the analysis sees the same JDK 25 bytecode
+      # the release produces.
+      - name: Build
+        run: ./mvnw --batch-mode -DskipTests package
+
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:java-kotlin"
