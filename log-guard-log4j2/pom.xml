@@ -15,7 +15,7 @@
     <description>Masks Log4j2 events at the rewrite point, so every appender sees the masked form.</description>
 
     <properties>
-        <log4j2.version>2.25.5</log4j2.version>
+        <log4j2.version>2.26.1</log4j2.version>
     </properties>
 
     <dependencies>
