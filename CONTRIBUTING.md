@@ -103,9 +103,46 @@ Optional body — the WHY, not the what.
 
 Types: `feat` · `fix` · `refactor` · `test` · `chore` · `ci` · `docs`.
 
-Branch from `main`, named `type/short-kebab-description`, one concern per branch.
+The scope is the module or feature slice, e.g. `fix(patterns): stop matching a bare port number`.
 
-A pull request needs a green CI run before it can be merged. CI runs four jobs:
+- Subject line max 72 characters, and it must say what changed. `wip`, `updates`, `fix stuff` and
+  `address review comments` are not acceptable messages.
+- Add a body only when the why is not obvious from the subject. Explain the reasoning, not the
+  diff — the diff is already in the commit.
+- Keep commits atomic. A commit that fixes a bug and reformats a file cannot be reverted cleanly.
+- Run `./mvnw test` before you commit. Do not commit build output; `target/` and generated poms are
+  not part of a change.
+
+### Branching and pushing
+
+**Never push to `main`.** Every change arrives through a pull request, so that CI has run before
+anything lands.
+
+```bash
+git checkout main && git pull
+git checkout -b fix/short-kebab-description
+# work, commit
+git push -u origin fix/short-kebab-description
+gh pr create --base main
+```
+
+External contributors work from a fork and open the pull request from their branch there; the flow
+is otherwise identical.
+
+- Branch from an up-to-date `main`, named `type/short-kebab-description`.
+- One concern per branch. A second idea is a second branch.
+- Never force-push `main`, and never rewrite history that someone else may already have pulled.
+  Force-pushing your own pull request branch is fine while it is under review.
+- Keep the branch current by rebasing on `main` or merging `main` into it, whichever you prefer.
+
+### Pull requests
+
+The title follows the same rules as a commit subject. The body says what changed, why, and how to
+test it. Link the issue it closes.
+
+Pull requests are squash-merged, so the pull request title becomes the commit message on `main` —
+write it accordingly. A pull request needs a green CI run before it can be merged. CI runs four
+jobs:
 
 | Job | What it proves |
 | :--- | :--- |

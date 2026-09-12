@@ -92,9 +92,17 @@ Comments explain why, never what. No `// TODO` in committed code.
 
 ## Git
 
-- Conventional commits: `type(scope): short description`, imperative, lowercase, no period.
+- Conventional commits: `type(scope): short description`, imperative, lowercase, no period, max 72
+  characters. A body only when the why is non-obvious. Never `wip`, `updates` or `fix stuff`.
 - Branch `type/short-kebab-description` from `main`, one concern per branch.
-- **Never push without being asked.** Never merge without a green CI run.
+- **Never commit or push directly to `main`.** Work on a branch and open a pull request.
+- **Never push, and never open a pull request, without being asked.** Committing locally is fine;
+  anything that leaves the machine is the maintainer's decision.
+- Never force-push, never amend or rebase a commit that has already been pushed, and never revert
+  or drop someone else's commit on your own initiative.
+- Run `./mvnw test` before committing. Never commit build output, `target/`, or generated poms.
+- Never merge without a green CI run. Pull requests are squash-merged, so the title becomes the
+  commit message on `main`.
 - Never tag or publish a release on your own initiative. Releasing is a human decision documented
   in [`docs/RELEASING.md`](docs/RELEASING.md), and a published version can never be withdrawn.
 
