@@ -6,6 +6,16 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Gradle installation instructions, the import line for the public API, a requirements table and a
+  link to the published javadoc, so the first five minutes no longer assume Maven.
+- A `Troubleshooting` section covering the cases that generate questions: nothing masked at all,
+  partially masked output, the three startup exceptions, the entity warning, OTLP still carrying
+  raw data, truncation, over-broad patterns and skipped nesting.
+- `CONTRIBUTING.md`, `AGENTS.md` and `SECURITY.md`, plus issue and pull request templates. A
+  masking bypass is now routed to private vulnerability reporting rather than a public issue.
+
 ## [0.1.1] — 2026-09-11
 
 ### Fixed
