@@ -84,7 +84,7 @@ masks lazily.
 <dependency>
     <groupId>io.github.dancan254</groupId>
     <artifactId>log-guard-spring-boot-starter</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
 </dependency>
 ```
 
@@ -358,7 +358,7 @@ while the engine does not.
 <dependency>
     <groupId>io.github.dancan254</groupId>
     <artifactId>log-guard-log4j2</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
 </dependency>
 ```
 
