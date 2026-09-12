@@ -22,7 +22,7 @@
         <skipPublishing>true</skipPublishing>
         <opentelemetry-logback-appender.version>2.30.0-alpha</opentelemetry-logback-appender.version>
         <opentelemetry-api-incubator.version>1.62.0-alpha</opentelemetry-api-incubator.version>
-        <lombok.version>1.18.46</lombok.version>
+        <lombok.version>1.18.48</lombok.version>
     </properties>
 
     <dependencies>
