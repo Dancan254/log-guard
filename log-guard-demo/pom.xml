@@ -20,7 +20,7 @@
              this module reached Maven Central. -->
         <maven.deploy.skip>true</maven.deploy.skip>
         <skipPublishing>true</skipPublishing>
-        <opentelemetry-logback-appender.version>2.30.0-alpha</opentelemetry-logback-appender.version>
+        <opentelemetry-logback-appender.version>2.31.1-alpha</opentelemetry-logback-appender.version>
         <opentelemetry-api-incubator.version>1.62.0-alpha</opentelemetry-api-incubator.version>
         <lombok.version>1.18.46</lombok.version>
     </properties>
