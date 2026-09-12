@@ -108,7 +108,23 @@ Each phase ends at a manual checkpoint that the maintainer runs before the next 
 Decisions are stated in the plan before the code is written — if a decision is not in the plan,
 ask before coding it.
 
-## Build order
-- **v0.1** — core engine, `@Pii`, Logback wrapper, auto-config, built-in patterns
-- **v0.2** — MDC, key-value pairs, throwable masking, nesting, startup validator
-- **v0.3** — Log4j2 `RewritePolicy`, JMH benchmarks, Jackson module, Maven Central publishing
+## Release history
+- **0.1.0** (2026-09-01) — everything landed in one release: `@Pii` and the four strategies, the
+  masking engine, the Logback wrapper, auto-config, built-in patterns, all five channels, nesting,
+  the startup validator, the Log4j2 `RewritePolicy`, the Jackson module, JMH benchmarks and Maven
+  Central publishing.
+- **0.1.1** (2026-09-11) — `url` and `scm` are inherited with the module name appended, so every
+  artifact on Central linked to a path that does not exist. Fixed in the reactor pom with
+  `child.*.inherit.append.path="false"`. No library code changed.
+
+The v0.1 → v0.3 split in `docs/IMPLEMENTATION-PLAN.md` records how the library was built, not what
+is left to build. Every phase in it has shipped.
+
+## Versioning
+SemVer. Below 1.0 a breaking change goes in the **minor**, not the major.
+- **patch** (0.1.x) — a masking fix or a build fix, no API change
+- **minor** (0.2.0) — a new strategy, pattern, property or module, and equally a rename or removal
+- **1.0.0** — only when `@Pii` and the `log-guard.*` surface are worth committing to
+
+Cut a release when `## [Unreleased]` holds something a user would act on. Documentation and CI
+changes reach people through GitHub the moment they merge and do not need a version of their own.
