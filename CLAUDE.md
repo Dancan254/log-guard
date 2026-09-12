@@ -5,10 +5,8 @@ A Spring Boot starter that masks personal data at the Logback **event** level, s
 file and OTLP exports all see the same redacted output.
 
 Full architecture record: `docs/ARCHITECTURE.md`
-(published: https://claude.ai/code/artifact/b26775b2-230b-4d55-9d63-4b8f4422440c)
 
 Implementation plan: `docs/IMPLEMENTATION-PLAN.md`
-(published: https://claude.ai/code/artifact/9a6e35cc-5bb4-4258-b3aa-cb3cea4cf882)
 
 ## What it is NOT
 - Not a static scanner. It changes what reaches the appender at runtime; it does not read your code.
