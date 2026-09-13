@@ -14,10 +14,6 @@
     <name>log-guard-log4j2</name>
     <description>Masks Log4j2 events at the rewrite point, so every appender sees the masked form.</description>
 
-    <properties>
-        <log4j2.version>2.25.5</log4j2.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>io.github.dancan254</groupId>
@@ -55,10 +51,11 @@
                         <arg>-Alog4j.graalvm.artifactId=${project.artifactId}</arg>
                     </compilerArgs>
                     <annotationProcessorPaths>
+                        <!-- No version: it comes from the Spring Boot BOM, the same place the
+                             log4j-core dependency above gets its own. A literal here drifts. -->
                         <path>
                             <groupId>org.apache.logging.log4j</groupId>
                             <artifactId>log4j-core</artifactId>
-                            <version>${log4j2.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
