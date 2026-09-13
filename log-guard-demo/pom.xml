@@ -21,7 +21,7 @@
         <maven.deploy.skip>true</maven.deploy.skip>
         <skipPublishing>true</skipPublishing>
         <opentelemetry-logback-appender.version>2.31.1-alpha</opentelemetry-logback-appender.version>
-        <opentelemetry-api-incubator.version>1.62.0-alpha</opentelemetry-api-incubator.version>
+        <opentelemetry-api-incubator.version>1.65.0-alpha</opentelemetry-api-incubator.version>
     </properties>
 
     <dependencies>
