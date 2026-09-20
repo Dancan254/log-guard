@@ -12,6 +12,8 @@ import org.slf4j.helpers.MessageFormatter;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -53,9 +55,18 @@ public final class MaskingLoggingEvent implements ILoggingEvent {
         this.failureReporter = failureReporter;
     }
 
-    /** Forces the message channel, so an appender configured to drop can decide before appending. */
+    /**
+     * Forces every masked channel, so an appender configured to drop can decide before appending.
+     * A failure in any channel — message/arguments, MDC, KVP or throwable — makes this true.
+     */
     boolean isMaskingFailed() {
         mask();
+        getMDCPropertyMap();
+        getKeyValuePairs();
+        IThrowableProxy throwable = getThrowableProxy();
+        if (throwable != null) {
+            throwable.getMessage();
+        }
         return maskingFailed;
     }
 
@@ -165,9 +176,14 @@ public final class MaskingLoggingEvent implements ILoggingEvent {
             IThrowableProxy original = delegate.getThrowableProxy();
             maskedThrowableProxy = original == null
                     ? null
-                    : new MaskingThrowableProxy(original, masker, failureReporter);
+                    : new MaskingThrowableProxy(original, masker, this::reportMaskingFailure);
         }
         return maskedThrowableProxy;
+    }
+
+    private void reportMaskingFailure(Throwable cause) {
+        maskingFailed = true;
+        failureReporter.accept(cause);
     }
 
     @Override
@@ -198,8 +214,10 @@ public final class MaskingLoggingEvent implements ILoggingEvent {
     @Override
     public Map<String, String> getMDCPropertyMap() {
         if (maskedMdc == null) {
-            maskedMdc = maskChannel(() -> masker.maskMdc(delegate.getMDCPropertyMap()),
+            Map<String, String> masked = maskChannel(() -> masker.maskMdc(delegate.getMDCPropertyMap()),
                     delegate::getMDCPropertyMap, Map.of());
+            maskedMdc = masked == null || masked.isEmpty() ? masked
+                    : Collections.unmodifiableMap(new LinkedHashMap<>(masked));
         }
         return maskedMdc;
     }
@@ -256,7 +274,7 @@ public final class MaskingLoggingEvent implements ILoggingEvent {
                 replaced.set(index, new KeyValuePair(pair.key, masked));
             }
         }
-        return replaced == null ? pairs : replaced;
+        return Collections.unmodifiableList(replaced == null ? new ArrayList<>(pairs) : replaced);
     }
 
     private Object maskKeyValue(Object value) {
