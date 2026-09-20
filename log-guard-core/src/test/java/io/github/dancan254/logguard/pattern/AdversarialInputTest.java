@@ -105,4 +105,16 @@ class AdversarialInputTest {
 
         assertThat(masked).doesNotContain("jane");
     }
+
+    @Test
+    void should_mask_a_token_that_crosses_the_cap_with_no_separator_before_it() {
+        PatternMasker masker = new PatternMasker(List.of(BuiltInPattern.EMAIL), List.of(),
+                new ValueMasker("pepper"), 32);
+
+        // No whitespace before the cap, so the head would stop inside the address and print the
+        // local-part fragment raw unless the scan window is extended to the next separator.
+        String masked = masker.mask(repeat("x", 28) + "jane.wanjiru@acme.io" + repeat("x", 50));
+
+        assertThat(masked).doesNotContain("jane", "wanjiru", "@acme.io").endsWith(PatternMasker.TRUNCATION_NOTICE);
+    }
 }

@@ -52,6 +52,7 @@ public final class PatternMasker {
             rules.add(new Rule(pattern.groupName(), pattern.strategy(), pattern.isLuhnChecked()));
             requirements.add(pattern.requirement());
         }
+        Pattern compiled = branchesByGroup.isEmpty() ? null : compile(branchesByGroup);
         for (int index = 0; index < custom.size(); index++) {
             MaskingConfig.CustomPattern pattern = custom.get(index);
             String group = "CUSTOM" + index;
@@ -64,12 +65,19 @@ public final class PatternMasker {
             }
             branchesByGroup.put(group, pattern.regex());
             rules.add(new Rule(group, pattern.strategy(), false));
+            // Validate the combined alternation after each addition so that named-group collisions
+            // with built-ins are reported against the custom pattern that introduced them.
+            try {
+                compiled = compile(branchesByGroup);
+            } catch (PatternSyntaxException cause) {
+                throw new InvalidPatternException(pattern.name(), pattern.regex(), cause.getDescription());
+            }
         }
 
-        // A custom regex declares no trigger character, so its presence disables the prefilter
-        // rather than risking a false negative.
+        // A custom regex declares no trigger character, so the regex must still run when the
+        // built-in prefilter finds nothing. The prefilter stays active for built-ins.
         this.alwaysScan = !custom.isEmpty();
-        this.alternation = branchesByGroup.isEmpty() ? null : compile(branchesByGroup);
+        this.alternation = compiled;
     }
 
     private static Pattern compile(Map<String, String> branchesByGroup) {
@@ -98,14 +106,24 @@ public final class PatternMasker {
      * padding a field, so the head is masked and the unexamined tail is dropped.
      */
     private String maskWithinLimit(String message) {
-        return maskAll(message.substring(0, headLength(message))) + TRUNCATION_NOTICE;
+        int cut = headLength(message);
+        if (cut == maxMessageLength) {
+            // No separator before the cap: a token crosses the boundary. Extending the scan to the
+            // next separator lets the regex see the whole token, so a partial match cannot be
+            // printed raw.
+            cut = nextWhitespace(message, maxMessageLength);
+        }
+        String masked = maskAll(message.substring(0, cut));
+        if (masked.length() > maxMessageLength) {
+            masked = masked.substring(0, maxMessageLength);
+        }
+        return masked + TRUNCATION_NOTICE;
     }
 
     /**
      * Cutting at the cap can split an address or a card number, and half a token matches no pattern
      * and is printed raw. The cut moves back to the last separator so the scanned head holds only
-     * whole tokens; with none in reach the cap stands, since a single unbroken run cannot be split
-     * into something a pattern would match anyway.
+     * whole tokens; with none in reach the scan window is extended forward instead.
      */
     private int headLength(String message) {
         for (int index = maxMessageLength; index > 0; index--) {
@@ -114,6 +132,15 @@ public final class PatternMasker {
             }
         }
         return maxMessageLength;
+    }
+
+    private int nextWhitespace(String message, int start) {
+        for (int index = start; index < message.length(); index++) {
+            if (Character.isWhitespace(message.charAt(index))) {
+                return index;
+            }
+        }
+        return message.length();
     }
 
     private String maskAll(String message) {
@@ -159,18 +186,17 @@ public final class PatternMasker {
 
     /**
      * One counting pass decides whether any enabled pattern could match at all. A line with three
-     * digits in it cannot hold a card number, and most log lines are that line.
+     * digits in it cannot hold a card number, and most log lines are that line. When custom patterns
+     * are configured the pass still runs for built-ins, and the regex falls back to scanning for
+     * the custom patterns if no built-in could match.
      */
     private boolean mightMatch(String message) {
-        if (alwaysScan) {
-            return true;
-        }
         MessageStats stats = MessageStats.of(message);
         for (PatternRequirement requirement : requirements) {
             if (requirement.isSatisfiedBy(stats)) {
                 return true;
             }
         }
-        return false;
+        return alwaysScan;
     }
 }
