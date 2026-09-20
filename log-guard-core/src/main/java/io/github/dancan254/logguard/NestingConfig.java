@@ -24,7 +24,7 @@ public record NestingConfig(int maxDepth, int maxElements, List<String> basePack
         }
         String name = type.getName();
         for (String basePackage : basePackages) {
-            if (name.startsWith(basePackage)) {
+            if (name.equals(basePackage) || name.startsWith(basePackage + ".")) {
                 return true;
             }
         }
