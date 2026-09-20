@@ -97,4 +97,19 @@ class MaskingInstallerTest {
                 .extracting(ILoggingEvent::getFormattedMessage)
                 .isEqualTo("Processing customer Customer(id=42, email=j****@acme.io)");
     }
+
+    @Test
+    void should_wrap_appender_added_after_installation_when_logger_is_used() {
+        Logger logger = context.getLogger("orders");
+        installer.install(context);
+
+        ListAppender<ILoggingEvent> late = listAppender(context, "late");
+        logger.addAppender(late);
+
+        logger.info("Processing customer {}", new Customer());
+
+        assertThat(late.list).singleElement()
+                .extracting(ILoggingEvent::getFormattedMessage)
+                .isEqualTo("Processing customer Customer(id=42, email=j****@acme.io)");
+    }
 }

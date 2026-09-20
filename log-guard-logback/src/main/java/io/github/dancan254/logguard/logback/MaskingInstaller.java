@@ -1,11 +1,15 @@
 package io.github.dancan254.logguard.logback;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.turbo.TurboFilter;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.spi.AppenderAttachable;
+import ch.qos.logback.core.spi.FilterReply;
 import io.github.dancan254.logguard.LogGuardMasker;
+import org.slf4j.Marker;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -23,6 +27,11 @@ public final class MaskingInstaller {
         for (Logger logger : context.getLoggerList()) {
             wrapAttached(logger);
         }
+        if (context.getTurboFilterList().stream().noneMatch(DynamicAppenderWrapper.class::isInstance)) {
+            DynamicAppenderWrapper turboFilter = new DynamicAppenderWrapper(this);
+            turboFilter.start();
+            context.addTurboFilter(turboFilter);
+        }
     }
 
     /**
@@ -33,12 +42,14 @@ public final class MaskingInstaller {
      * prepareForDeferredProcessing does not force it — the work still lands on the async worker.
      */
     private void wrapAttached(AppenderAttachable<ILoggingEvent> attachable) {
-        for (Appender<ILoggingEvent> appender : snapshot(attachable)) {
-            if (appender instanceof MaskingAppenderWrapper) {
-                continue;
+        synchronized (attachable) {
+            for (Appender<ILoggingEvent> appender : snapshot(attachable)) {
+                if (appender instanceof MaskingAppenderWrapper) {
+                    continue;
+                }
+                attachable.detachAppender(appender);
+                attachable.addAppender(started(new MaskingAppenderWrapper(appender, masker)));
             }
-            attachable.detachAppender(appender);
-            attachable.addAppender(started(new MaskingAppenderWrapper(appender, masker)));
         }
     }
 
@@ -54,5 +65,46 @@ public final class MaskingInstaller {
     private static MaskingAppenderWrapper started(MaskingAppenderWrapper wrapper) {
         wrapper.start();
         return wrapper;
+    }
+
+    private static boolean hasUnwrappedAppender(AppenderAttachable<ILoggingEvent> attachable) {
+        for (Iterator<Appender<ILoggingEvent>> iterator = attachable.iteratorForAppenders(); iterator.hasNext(); ) {
+            if (!(iterator.next() instanceof MaskingAppenderWrapper)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Logback has no listener for appender attachment, so a turbo filter lazily wraps any appender
+     * added after installation the next time the logger is used. The check walks from the logging
+     * logger up to the root so appenders attached to any ancestor are also wrapped.
+     */
+    private static final class DynamicAppenderWrapper extends TurboFilter {
+
+        private final MaskingInstaller installer;
+
+        DynamicAppenderWrapper(MaskingInstaller installer) {
+            this.installer = installer;
+        }
+
+        @Override
+        public FilterReply decide(Marker marker, Logger logger, Level level, String format, Object[] params, Throwable t) {
+            LoggerContext context = logger.getLoggerContext();
+            String name = logger.getName();
+            while (true) {
+                Logger current = context.getLogger(name);
+                if (hasUnwrappedAppender(current)) {
+                    installer.wrapAttached(current);
+                }
+                if (name.isEmpty()) {
+                    break;
+                }
+                int dot = name.lastIndexOf('.');
+                name = (dot == -1) ? "" : name.substring(0, dot);
+            }
+            return FilterReply.NEUTRAL;
+        }
     }
 }
