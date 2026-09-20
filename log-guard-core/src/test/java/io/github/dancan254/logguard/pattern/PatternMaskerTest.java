@@ -92,4 +92,28 @@ class PatternMaskerTest {
                 .isInstanceOf(InvalidPatternException.class)
                 .hasMessageContaining("employee-id");
     }
+
+    @Test
+    void should_name_the_custom_pattern_when_its_named_group_collides_with_a_builtin() {
+        List<MaskingConfig.CustomPattern> custom =
+                List.of(new MaskingConfig.CustomPattern("collider", "(?<EMAIL>\\S+@\\S+)", MaskStrategy.REDACT));
+
+        assertThatThrownBy(() -> new PatternMasker(List.of(BuiltInPattern.EMAIL), custom, new ValueMasker("pepper")))
+                .isInstanceOf(InvalidPatternException.class)
+                .hasMessageContaining("collider")
+                .hasMessageNotContaining("PatternSyntaxException");
+    }
+
+    @Test
+    void should_keep_prefilter_active_for_built_ins_when_custom_patterns_exist() {
+        PatternMasker masker = new PatternMasker(List.of(BuiltInPattern.CREDIT_CARD),
+                List.of(new MaskingConfig.CustomPattern("account", "ACC-\\d{10}", MaskStrategy.REDACT)),
+                new ValueMasker("pepper"));
+
+        // The line cannot satisfy any built-in requirement and contains no custom match, so the
+        // prefilter should still decide the regex is not worth running and leave it untouched.
+        String message = "no address and no digits here";
+
+        assertThat(masker.mask(message)).isSameAs(message);
+    }
 }

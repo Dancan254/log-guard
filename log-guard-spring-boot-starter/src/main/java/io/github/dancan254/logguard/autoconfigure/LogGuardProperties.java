@@ -145,7 +145,8 @@ public record LogGuardProperties(
     /**
      * A pattern of your own, for identifiers only your systems issue.
      *
-     * @param name     names the capture group, so it must be unique among configured patterns
+     * @param name     the name used in error messages when this pattern does not compile; the regex
+     *                 capture group is generated internally, so this is for diagnostics only
      * @param regex    the expression to match; one that does not compile fails startup
      * @param strategy how a match is masked
      */
