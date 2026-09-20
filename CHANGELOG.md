@@ -6,6 +6,8 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-09-20
+
 ### Added
 
 - Gradle installation instructions, the import line for the public API, a requirements table and a
@@ -17,6 +19,33 @@ All notable changes to this project are recorded here. The format follows
   masking bypass is now routed to private vulnerability reporting rather than a public issue.
 - `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), a Dependabot configuration for Maven and GitHub
   Actions, and a weekly CodeQL analysis. Build and javadoc badges in the readme.
+
+### Fixed
+
+- **Partial PII could leak when a long token crossed the truncation boundary.** `PatternMasker`
+  now extends the scan window to the next token boundary when no whitespace precedes
+  `maxMessageLength`, so a sensitive value split by truncation is still masked.
+- **Custom regex named-group collisions with built-ins** now raise `InvalidPatternException` naming
+  the custom pattern, not a raw `PatternSyntaxException`.
+- **`log-guard.*` IDE auto-completion** works again: the Spring Boot configuration processor is
+  explicitly enabled for JDK 25.
+- **`on-failure: DROP` now drops events when any masking channel fails**, not just
+  message/arguments. Failures in MDC, key-value pairs, or the throwable chain are included.
+- **The startup validator now detects `toString()` inherited from a superclass**, including
+  Lombok-generated `toString()` on entity base classes.
+- **`basePackages` matching** is now exact-or-trailing-dot, so `com.example` no longer matches
+  `com.examplefoo`.
+- **Log4j2 `printf`-style messages** now receive type-aware argument masking before interpolation.
+- **Dynamically added Logback appenders** are wrapped lazily via a `TurboFilter`, so appenders
+  attached after startup are still masked.
+- **`ObjectRenderer` container handling** only re-renders collections/maps that may hold PII, and
+  now supports `Optional`, `Stream`, and primitive arrays. JDK superclass fields are skipped, so
+  classes extending JDK types no longer emit `<unreadable>` fields.
+- **Hashing allocation** is reduced by reusing a `ThreadLocal<MessageDigest>` instead of creating a
+  new digest per `HASH` call.
+- **Smoke test robustness:** `smoke/verify.sh` now uses the Maven wrapper and fails if the JVM
+  crashes.
+- **Demo privacy story:** the demo's `CustomerResponse` no longer returns the raw email address.
 
 ## [0.1.1] — 2026-09-11
 
@@ -79,6 +108,7 @@ all see the same redacted output.
   policy runs, so only the pattern layer applies to them.
 - A bare name logged as a plain string is undetectable, by either layer.
 
-[Unreleased]: https://github.com/Dancan254/log-guard/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/Dancan254/log-guard/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/Dancan254/log-guard/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Dancan254/log-guard/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Dancan254/log-guard/releases/tag/v0.1.0
