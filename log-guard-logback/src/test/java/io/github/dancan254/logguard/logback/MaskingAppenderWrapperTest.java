@@ -12,10 +12,13 @@ import io.github.dancan254.logguard.MaskingConfig;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static io.github.dancan254.logguard.logback.LogbackFixture.Customer;
 import static io.github.dancan254.logguard.logback.LogbackFixture.capture;
+import static io.github.dancan254.logguard.logback.LogbackFixture.captured;
+import static io.github.dancan254.logguard.logback.LogbackFixture.defaultConfig;
 import static io.github.dancan254.logguard.logback.LogbackFixture.listAppender;
 import static io.github.dancan254.logguard.logback.LogbackFixture.masker;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -137,5 +140,71 @@ class MaskingAppenderWrapperTest {
         assertThat(delegate.list).singleElement()
                 .extracting(ILoggingEvent::getFormattedMessage)
                 .isEqualTo(MaskingLoggingEvent.MASKING_FAILED_MESSAGE);
+    }
+
+    @Test
+    void should_discard_the_event_when_mdc_masking_fails_and_the_mode_is_drop() {
+        ListAppender<ILoggingEvent> delegate = listAppender(context, "console");
+        MaskingAppenderWrapper wrapper = new MaskingAppenderWrapper(delegate, failingMdcMasker(FailureMode.DROP));
+        wrapper.start();
+
+        wrapper.doAppend(captured(Map.of("actor", "jane.wanjiru@acme.io"), logger -> logger.info("saved")));
+
+        assertThat(delegate.list).isEmpty();
+    }
+
+    @Test
+    void should_discard_the_event_when_key_value_pair_masking_fails_and_the_mode_is_drop() {
+        ListAppender<ILoggingEvent> delegate = listAppender(context, "console");
+        MaskingAppenderWrapper wrapper =
+                new MaskingAppenderWrapper(delegate, failingArgumentMasker(FailureMode.DROP));
+        wrapper.start();
+
+        wrapper.doAppend(captured(logger -> logger.atInfo().addKeyValue("customer", new Customer()).log("saved")));
+
+        assertThat(delegate.list).isEmpty();
+    }
+
+    @Test
+    void should_discard_the_event_when_throwable_masking_fails_and_the_mode_is_drop() {
+        ListAppender<ILoggingEvent> delegate = listAppender(context, "console");
+        MaskingAppenderWrapper wrapper =
+                new MaskingAppenderWrapper(delegate, failingThrowableMasker(FailureMode.DROP));
+        wrapper.start();
+
+        wrapper.doAppend(captured(logger ->
+                logger.error("failed", new IllegalStateException("jane.wanjiru@acme.io exists"))));
+
+        assertThat(delegate.list).isEmpty();
+    }
+
+    private static LogGuardMasker failingMdcMasker(FailureMode onFailure) {
+        return new LogGuardMasker(defaultConfig(onFailure)) {
+            @Override
+            public Map<String, String> maskMdc(Map<String, String> mdc) {
+                throw new IllegalStateException("mdc masking blew up");
+            }
+        };
+    }
+
+    private static LogGuardMasker failingArgumentMasker(FailureMode onFailure) {
+        return new LogGuardMasker(defaultConfig(onFailure)) {
+            @Override
+            public Object maskArgument(Object argument) {
+                throw new IllegalStateException("argument masking blew up");
+            }
+        };
+    }
+
+    private static LogGuardMasker failingThrowableMasker(FailureMode onFailure) {
+        return new LogGuardMasker(defaultConfig(onFailure)) {
+            @Override
+            public String maskMessage(String message) {
+                if (message != null && message.contains("@acme.io")) {
+                    throw new IllegalStateException("throwable masking blew up");
+                }
+                return super.maskMessage(message);
+            }
+        };
     }
 }

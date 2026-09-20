@@ -45,10 +45,14 @@ final class LogbackFixture {
         return masker(FailureMode.PLACEHOLDER);
     }
 
-    static LogGuardMasker masker(FailureMode onFailure) {
-        return new LogGuardMasker(new MaskingConfig(true, true,
+    static MaskingConfig defaultConfig(FailureMode onFailure) {
+        return new MaskingConfig(true, true,
                 List.of(BuiltInPattern.EMAIL), List.of(), "pepper",
-                Set.of("customer-email"), NestingConfig.DEFAULT, onFailure, MaskingConfig.DEFAULT_MAX_MESSAGE_LENGTH));
+                Set.of("customer-email"), NestingConfig.DEFAULT, onFailure, MaskingConfig.DEFAULT_MAX_MESSAGE_LENGTH);
+    }
+
+    static LogGuardMasker masker(FailureMode onFailure) {
+        return new LogGuardMasker(defaultConfig(onFailure));
     }
 
     static ListAppender<ILoggingEvent> listAppender(LoggerContext context, String name) {
