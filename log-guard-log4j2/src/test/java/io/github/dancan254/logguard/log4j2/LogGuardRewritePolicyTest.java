@@ -37,6 +37,17 @@ class LogGuardRewritePolicyTest {
         }
     }
 
+    static class Person {
+        Long id = 1L;
+        @Pii
+        String name = "Jane Wanjiru";
+
+        @Override
+        public String toString() {
+            return "Person(id=" + id + ", name=" + name + ")";
+        }
+    }
+
     private static final LogGuardMasker MASKER = new LogGuardMasker(new MaskingConfig(true, true,
             List.of(BuiltInPattern.EMAIL), List.of(), "pepper",
             Set.of("customer-email"), NestingConfig.DEFAULT, FailureMode.PLACEHOLDER,
@@ -207,6 +218,21 @@ class LogGuardRewritePolicyTest {
                 .build();
 
         assertThat(policy.rewrite(source).getMessage().getFormattedMessage())
-                .isEqualTo("customer=Customer(id=42, email=***)");
+                .isEqualTo("customer=Customer(id=42, email=j****@acme.io)");
+    }
+
+    @Test
+    void should_mask_a_pii_argument_in_a_printf_style_message_without_regex() {
+        LogGuardMasker typeAwareOnly = new LogGuardMasker(new MaskingConfig(true, false,
+                List.of(), List.of(), "pepper",
+                Set.of(), NestingConfig.DEFAULT, FailureMode.PLACEHOLDER,
+                MaskingConfig.DEFAULT_MAX_MESSAGE_LENGTH));
+        LogGuardRewritePolicy policy = LogGuardRewritePolicy.using(typeAwareOnly);
+        LogEvent source = event()
+                .setMessage(new StringFormattedMessage("user=%s", new Person()))
+                .build();
+
+        assertThat(policy.rewrite(source).getMessage().getFormattedMessage())
+                .isEqualTo("user=Person(id=1, name=***)");
     }
 }
