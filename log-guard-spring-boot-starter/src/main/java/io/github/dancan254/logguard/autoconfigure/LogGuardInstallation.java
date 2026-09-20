@@ -6,6 +6,7 @@ import io.github.dancan254.logguard.MaskingConfig;
 import io.github.dancan254.logguard.exception.MissingHashSaltException;
 import org.springframework.util.ClassUtils;
 
+import java.util.List;
 import java.util.Set;
 
 final class LogGuardInstallation {
@@ -67,7 +68,7 @@ final class LogGuardInstallation {
      * Only custom patterns can be checked here. A {@code @Pii(strategy = HASH)} on a class nobody
      * has loaded yet needs the classpath scan the startup validator brings.
      */
-    private static void requireHashSalt(LogGuardProperties properties, java.util.List<MaskingConfig.CustomPattern> custom) {
+    private static void requireHashSalt(LogGuardProperties properties, List<MaskingConfig.CustomPattern> custom) {
         boolean salted = properties.hashSalt() != null && !properties.hashSalt().isBlank();
         if (!salted && custom.stream().anyMatch(pattern -> pattern.strategy() == MaskStrategy.HASH)) {
             throw new MissingHashSaltException();
