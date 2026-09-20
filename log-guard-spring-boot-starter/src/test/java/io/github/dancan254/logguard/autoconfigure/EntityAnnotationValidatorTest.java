@@ -106,4 +106,12 @@ class EntityAnnotationValidatorTest {
         assertThatThrownBy(() -> inheritedValidator(ValidationMode.WARN, false).afterPropertiesSet())
                 .isInstanceOf(MissingHashSaltException.class);
     }
+
+    @Test
+    void should_report_an_entity_that_inherits_to_string_from_a_lombok_base_class() {
+        assertThatThrownBy(() -> inheritedValidator(ValidationMode.FAIL, true).afterPropertiesSet())
+                .isInstanceOf(UnannotatedEntityException.class)
+                .hasMessageContaining("LombokSubEntity")
+                .hasMessageContaining("email");
+    }
 }
