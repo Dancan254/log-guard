@@ -13,8 +13,8 @@ version="$("$here/../mvnw" --batch-mode -q -N help:evaluate \
     -Dexpression=project.version -DforceStdout)"
 echo "checking log-guard $version"
 
-(cd "$here/clean-app" && mvn --batch-mode -q clean package "-Dlog-guard.version=$version")
-java -jar "$here"/clean-app/target/clean-app-0.0.1-SNAPSHOT.jar > "$output" 2>&1 || true
+(cd "$here/clean-app" && "$here/../mvnw" --batch-mode -q clean package "-Dlog-guard.version=$version")
+java -jar "$here"/clean-app/target/clean-app-0.0.1-SNAPSHOT.jar > "$output" 2>&1
 
 echo "--- app output ---"
 grep SMOKE "$output" || true

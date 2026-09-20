@@ -23,6 +23,14 @@ public final class ValueMasker {
     private static final int TAIL_LENGTH = 3;
     private static final int DIGEST_BYTES = 3;
 
+    private static final ThreadLocal<MessageDigest> SHA_256 = ThreadLocal.withInitial(() -> {
+        try {
+            return MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException cause) {
+            throw new IllegalStateException("SHA-256 is required of every JDK", cause);
+        }
+    });
+
     private final String hashSalt;
 
     public ValueMasker(String hashSalt) {
@@ -65,17 +73,9 @@ public final class ValueMasker {
         if (!hasHashSalt()) {
             return REDACTED;
         }
-        MessageDigest digest = sha256();
+        MessageDigest digest = SHA_256.get();
         digest.update(hashSalt.getBytes(StandardCharsets.UTF_8));
         byte[] output = digest.digest(value.getBytes(StandardCharsets.UTF_8));
         return "#" + HexFormat.of().formatHex(output, 0, DIGEST_BYTES);
-    }
-
-    private static MessageDigest sha256() {
-        try {
-            return MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException cause) {
-            throw new IllegalStateException("SHA-256 is required of every JDK", cause);
-        }
     }
 }

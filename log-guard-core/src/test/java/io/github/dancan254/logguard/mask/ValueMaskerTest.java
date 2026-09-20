@@ -62,4 +62,13 @@ class ValueMaskerTest {
     void should_degrade_to_redact_when_hash_is_used_without_salt() {
         assertThat(new ValueMasker("  ").mask("jane.wanjiru@acme.io", MaskStrategy.HASH)).isEqualTo("***");
     }
+
+    @Test
+    void should_reset_digest_between_hash_calls() {
+        String original = masker.mask("jane.wanjiru@acme.io", MaskStrategy.HASH);
+        masker.mask("intermediate-value@example.com", MaskStrategy.HASH);
+        String afterIntermediate = masker.mask("jane.wanjiru@acme.io", MaskStrategy.HASH);
+
+        assertThat(afterIntermediate).isEqualTo(original);
+    }
 }
