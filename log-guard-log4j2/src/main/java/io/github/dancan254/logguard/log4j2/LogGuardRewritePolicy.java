@@ -17,6 +17,8 @@ import org.apache.logging.log4j.util.ReadOnlyStringMap;
 import org.apache.logging.log4j.util.SortedArrayStringMap;
 import org.apache.logging.log4j.util.StringMap;
 
+import java.util.IllegalFormatException;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -146,13 +148,20 @@ public final class LogGuardRewritePolicy implements RewritePolicy {
             return formatted;
         }
         String format = message.getFormat();
-        // Only a {}-style format can be rebuilt this way. Handing ParameterizedMessage.format a
-        // printf or MessageFormat pattern returns it verbatim and every argument disappears from
-        // the line, so those keep their own rendering and the pattern layer alone.
-        if (format == null || !format.contains("{}")) {
+        if (format == null) {
             return formatted;
         }
-        return ParameterizedMessage.format(format, masked);
+        if (format.contains("{}")) {
+            return ParameterizedMessage.format(format, masked);
+        }
+        if (format.contains("%")) {
+            try {
+                return String.format(Locale.ROOT, format, masked);
+            } catch (IllegalFormatException ignored) {
+                return formatted;
+            }
+        }
+        return formatted;
     }
 
     /** Returns null when no value changed, so an untouched event keeps its own context map. */
