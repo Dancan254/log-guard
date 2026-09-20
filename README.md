@@ -121,14 +121,14 @@ masks lazily.
 <dependency>
     <groupId>io.github.dancan254</groupId>
     <artifactId>log-guard-spring-boot-starter</artifactId>
-    <version>0.1.1</version>
+    <version>0.1.2</version>
 </dependency>
 ```
 
 **Gradle**
 
 ```kotlin
-implementation("io.github.dancan254:log-guard-spring-boot-starter:0.1.1")
+implementation("io.github.dancan254:log-guard-spring-boot-starter:0.1.2")
 ```
 
 That is the only artifact you declare. Logback comes from your application, there is no appender to
@@ -423,7 +423,7 @@ while the engine does not.
 <dependency>
     <groupId>io.github.dancan254</groupId>
     <artifactId>log-guard-log4j2</artifactId>
-    <version>0.1.1</version>
+    <version>0.1.2</version>
 </dependency>
 ```
 
