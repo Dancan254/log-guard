@@ -7,7 +7,11 @@ import io.github.dancan254.logguard.mask.ValueMasker;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,8 +38,8 @@ class ObjectRendererTest {
     }
 
     /** AtomicInteger's private field lives in a java.base package that is not open to us. */
-    private static class Unreadable extends AtomicInteger {
-        @Pii
+    private static class JdkSubclass extends AtomicInteger {
+        @Pii(strategy = MaskStrategy.PARTIAL)
         String email = "jane.wanjiru@acme.io";
     }
 
@@ -67,8 +71,62 @@ class ObjectRendererTest {
     }
 
     @Test
-    void should_render_placeholder_when_field_read_throws() {
-        assertThat(renderer.render(new Unreadable())).contains("<unreadable>");
+    void should_mask_user_fields_without_unreadable_jdk_superclass_fields() {
+        assertThat(renderer.render(new JdkSubclass()))
+                .isEqualTo("JdkSubclass(email=j****@acme.io)");
+    }
+
+    @Test
+    void should_render_collection_by_to_string_when_elements_have_no_pii() {
+        List<String> labels = List.of("one", "two");
+
+        assertThat(renderer.render(labels)).isEqualTo(labels.toString());
+    }
+
+    @Test
+    void should_render_map_by_to_string_when_entries_have_no_pii() {
+        Map<String, String> labels = Map.of("a", "one", "b", "two");
+
+        assertThat(renderer.render(labels)).isEqualTo(labels.toString());
+    }
+
+    @Test
+    void should_render_collection_elements_when_it_may_contain_pii() {
+        assertThat(renderer.render(List.of(new Customer())))
+                .contains("phoneNumber=+2547****891");
+    }
+
+    @Test
+    void should_render_array_elements_even_when_scalars() {
+        assertThat(renderer.render(new String[]{"one", "two"})).isEqualTo("[one, two]");
+    }
+
+    @Test
+    void should_render_primitive_array_as_elements() {
+        assertThat(renderer.render(new int[]{1, 2, 3})).isEqualTo("[1, 2, 3]");
+    }
+
+    @Test
+    void should_render_optional_value_when_present() {
+        assertThat(renderer.render(Optional.of(new Customer())))
+                .contains("phoneNumber=+2547****891");
+    }
+
+    @Test
+    void should_render_empty_optional_as_optional_empty() {
+        assertThat(renderer.render(Optional.empty())).isEqualTo("Optional.empty");
+    }
+
+    @Test
+    void should_render_stream_elements() {
+        assertThat(renderer.render(Stream.of(new Customer())))
+                .contains("phoneNumber=+2547****891");
+    }
+
+    @Test
+    void should_cap_stream_elements_at_the_configured_limit() {
+        assertThat(renderer.render(Stream.generate(() -> new Customer()).limit(12)))
+                .endsWith(", …]");
     }
 
     @Test

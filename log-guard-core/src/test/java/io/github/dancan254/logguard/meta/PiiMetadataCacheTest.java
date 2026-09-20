@@ -4,6 +4,8 @@ import io.github.dancan254.logguard.MaskStrategy;
 import io.github.dancan254.logguard.Pii;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PiiMetadataCacheTest {
@@ -32,6 +34,11 @@ class PiiMetadataCacheTest {
     private static class Anonymous {
         Long id;
         String reference;
+    }
+
+    private static class JdkSubclass extends AtomicInteger {
+        @Pii
+        String email;
     }
 
     @Test
@@ -82,6 +89,13 @@ class PiiMetadataCacheTest {
     @Test
     void should_report_no_pii_when_class_has_no_annotations() {
         assertThat(PiiMetadataCache.forClass(Anonymous.class).hasPii()).isFalse();
+    }
+
+    @Test
+    void should_ignore_jdk_superclass_fields_when_scanning() {
+        assertThat(PiiMetadataCache.forClass(JdkSubclass.class).fields())
+                .extracting(PiiField::name)
+                .containsExactly("email");
     }
 
     /** Reached at exhausted depth through Deep, then again one field later with depth to spare. */

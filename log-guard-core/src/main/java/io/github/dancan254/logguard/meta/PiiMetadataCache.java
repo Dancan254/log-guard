@@ -45,6 +45,9 @@ public final class PiiMetadataCache {
         boolean hasPii = false;
 
         for (Class<?> current : hierarchyFromRoot(type)) {
+            if (isOpaque(current)) {
+                continue;
+            }
             for (Field field : current.getDeclaredFields()) {
                 if (field.isSynthetic() || Modifier.isStatic(field.getModifiers())) {
                     continue;
@@ -103,6 +106,9 @@ public final class PiiMetadataCache {
         try {
             Map<String, Pii> recordAnnotations = recordAnnotationsByComponent(candidate);
             for (Class<?> current : hierarchyFromRoot(candidate)) {
+                if (isOpaque(current)) {
+                    continue;
+                }
                 for (Field field : current.getDeclaredFields()) {
                     if (field.isSynthetic() || Modifier.isStatic(field.getModifiers())) {
                         continue;
