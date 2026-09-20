@@ -143,8 +143,9 @@ class EntityAnnotationValidator implements InitializingBean {
     }
 
     /**
-     * Only classes that declare a {@code toString} are reported. Without one the object prints as
-     * a class name and a hash, and no field of it has ever reached a log.
+     * Only classes that have an overridden {@code toString} somewhere in their hierarchy are
+     * reported. Without one the object prints as a class name and a hash, and no field of it has
+     * ever reached a log.
      */
     private static List<String> unannotatedSensitiveFields(Class<?> entity) {
         if (!declaresToString(entity)) {
@@ -165,8 +166,7 @@ class EntityAnnotationValidator implements InitializingBean {
 
     private static boolean declaresToString(Class<?> entity) {
         try {
-            entity.getDeclaredMethod("toString");
-            return true;
+            return entity.getMethod("toString").getDeclaringClass() != Object.class;
         } catch (NoSuchMethodException absent) {
             return false;
         }
